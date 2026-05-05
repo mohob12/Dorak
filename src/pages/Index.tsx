@@ -8,8 +8,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
-import { Bell, ChartBar, CheckCircle2, Clock3, Copy, LayoutGrid, Monitor, QrCode, RefreshCcw, Sparkles, Ticket, TrendingUp, Users, Volume2, Wifi, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Bell, ChartBar, CheckCircle2, Clock3, Copy, LayoutGrid, QrCode, RefreshCcw, Sparkles, Ticket, TrendingUp, Users, Volume2, Wifi } from "lucide-react";
+import { toast } from "sonner";
 import { MadeWithDyad } from "@/components/made-with-dyad";
+
+type QueueState = {
+  id: string;
+  name: string;
+  prefix: string;
+  current: number;
+  waiting: number;
+  averageMinutes: number;
+};
 
 const stats = [
   { label: "مخدوم اليوم", value: "248", note: "+18% عن الأمس", icon: Users, tone: "bg-sky-100 text-sky-700" },
@@ -17,10 +28,10 @@ const stats = [
   { label: "الأفرع النشطة", value: "04", note: "متصل الآن", icon: LayoutGrid, tone: "bg-violet-100 text-violet-700" },
 ];
 
-const queues = [
-  { name: "طلبات الكافيه", now: "A-124", next: ["A-125", "A-126", "A-127"], waiting: 8, color: "bg-amber-100 text-amber-700" },
-  { name: "الاستلام السريع", now: "B-038", next: ["B-039", "B-040", "B-041"], waiting: 4, color: "bg-sky-100 text-sky-700" },
-  { name: "خدمة العملاء", now: "C-091", next: ["C-092", "C-093", "C-094"], waiting: 11, color: "bg-rose-100 text-rose-700" },
+const initialQueues: QueueState[] = [
+  { id: "coffee", name: "طلبات الكافيه", prefix: "A", current: 124, waiting: 8, averageMinutes: 12 },
+  { id: "pickup", name: "الاستلام السريع", prefix: "B", current: 38, waiting: 4, averageMinutes: 8 },
+  { id: "support", name: "خدمة العملاء", prefix: "C", current: 91, waiting: 11, averageMinutes: 16 },
 ];
 
 const activity = [
@@ -30,19 +41,35 @@ const activity = [
   { time: "09:44", text: "تغيير حالة التذكرة C-088 إلى مكتمل" },
 ];
 
-const apiItems = [
-  "POST /auth/login",
-  "GET /branches/:id/queues",
-  "POST /queues/:id/next",
-  "POST /tickets/join",
-  "POST /notifications/whatsapp",
-];
+const apiItems = ["POST /auth/login", "GET /branches/:id/queues", "POST /queues/:id/next", "POST /tickets/join", "POST /notifications/whatsapp"];
 
 const Index = () => {
   const [darkMode, setDarkMode] = useState(true);
   const [sound, setSound] = useState(true);
   const [push, setPush] = useState(false);
+  const [queues, setQueues] = useState(initialQueues);
+  const [selectedQueueId, setSelectedQueueId] = useState(initialQueues[0].id);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [customerTicket, setCustomerTicket] = useState<{ ticket: string; queueName: string; eta: number } | null>(null);
+
   const progress = useMemo(() => 68, []);
+  const selectedQueue = queues.find((queue) => queue.id === selectedQueueId) ?? queues[0];
+
+  const handleJoinQueue = () => {
+    const nextNumber = selectedQueue.current + selectedQueue.waiting + 1;
+    const ticket = `${selectedQueue.prefix}-${String(nextNumber).padStart(3, "0")}`;
+    const eta = selectedQueue.averageMinutes * (selectedQueue.waiting + 1);
+
+    setQueues((currentQueues) =>
+      currentQueues.map((queue) =>
+        queue.id === selectedQueue.id ? { ...queue, waiting: queue.waiting + 1 } : queue,
+      ),
+    );
+
+    setCustomerTicket({ ticket, queueName: selectedQueue.name, eta });
+    toast.success(`تم إصدار التذكرة ${ticket} بنجاح`);
+  };
 
   return (
     <div dir="rtl" className={darkMode ? "dark" : ""}>
@@ -144,10 +171,10 @@ const Index = () => {
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Badge className={`rounded-full ${queue.color}`}>{queue.waiting} في الانتظار</Badge>
+                            <Badge className={`rounded-full ${queue.id === selectedQueue.id ? "bg-sky-100 text-sky-700" : queue.id === "pickup" ? "bg-amber-100 text-amber-700" : "bg-rose-100 text-rose-700"}`}>{queue.waiting} في الانتظار</Badge>
                             <p className="text-lg font-bold text-slate-950 dark:text-white">{queue.name}</p>
                           </div>
-                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">الحالي: {queue.now}</p>
+                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">الحالي: {queue.prefix}-{String(queue.current).padStart(3, "0")}</p>
                         </div>
                         <div className="flex gap-2">
                           <Button size="sm" className="rounded-full bg-sky-600 hover:bg-sky-500"><CheckCircle2 className="ml-2 h-4 w-4" />استدعاء</Button>
@@ -155,9 +182,10 @@ const Index = () => {
                         </div>
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
-                        {queue.next.map((ticket) => (
-                          <Badge key={ticket} variant="outline" className="rounded-full bg-white dark:bg-slate-950">{ticket}</Badge>
-                        ))}
+                        {Array.from({ length: 3 }).map((_, index) => {
+                          const ticketNumber = queue.current + index + 1;
+                          return <Badge key={`${queue.id}-${ticketNumber}`} variant="outline" className="rounded-full bg-white dark:bg-slate-950">{queue.prefix}-{String(ticketNumber).padStart(3, "0")}</Badge>;
+                        })}
                       </div>
                     </div>
                   ))}
@@ -204,23 +232,67 @@ const Index = () => {
                   <CardDescription>لا يحتاج العميل إلى تسجيل دخول</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">اختر الصف الذي تريد الانضمام إليه</p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      {queues.map((queue) => (
+                        <Button
+                          key={queue.id}
+                          type="button"
+                          variant={selectedQueueId === queue.id ? "default" : "secondary"}
+                          className="rounded-full"
+                          onClick={() => setSelectedQueueId(queue.id)}
+                        >
+                          {queue.name}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600 dark:text-slate-300">الاسم</label>
+                      <Input value={customerName} onChange={(event) => setCustomerName(event.target.value)} placeholder="مثال: أحمد" className="rounded-2xl" />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-slate-600 dark:text-slate-300">رقم الجوال</label>
+                      <Input value={customerPhone} onChange={(event) => setCustomerPhone(event.target.value)} placeholder="05xxxxxxxx" className="rounded-2xl" />
+                    </div>
+                  </div>
+
                   <div className="flex aspect-square items-center justify-center rounded-[2rem] border-2 border-dashed border-sky-300 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/20">
                     <div className="text-center">
                       <QrCode className="mx-auto h-16 w-16 text-sky-600" />
                       <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">QR لصالة الانتظار</p>
                     </div>
                   </div>
+
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
                       <p className="text-sm text-slate-500 dark:text-slate-400">وقت الانتظار المتوقع</p>
-                      <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">12 دقيقة</p>
+                      <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{selectedQueue.averageMinutes} دقيقة</p>
                     </div>
                     <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
-                      <p className="text-sm text-slate-500 dark:text-slate-400">رقمي الآن</p>
-                      <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">B-038</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">رقم الدور الحالي</p>
+                      <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{selectedQueue.prefix}-{String(selectedQueue.current).padStart(3, "0")}</p>
                     </div>
                   </div>
-                  <Button className="w-full rounded-full bg-sky-600 hover:bg-sky-500"><Ticket className="ml-2 h-4 w-4" />احصل على تذكرتك</Button>
+
+                  <Button className="w-full rounded-full bg-sky-600 hover:bg-sky-500" onClick={handleJoinQueue}>
+                    <Ticket className="ml-2 h-4 w-4" />
+                    احصل على تذكرتك
+                  </Button>
+
+                  {customerTicket && (
+                    <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-900 dark:bg-emerald-950/20">
+                      <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-600" />
+                      <p className="mt-3 text-lg font-bold text-slate-950 dark:text-white">تم الانضمام بنجاح</p>
+                      <p className="mt-2 text-slate-600 dark:text-slate-300">
+                        تذكرتك هي <span className="font-black text-emerald-600">{customerTicket.ticket}</span> في {customerTicket.queueName}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">الوقت التقديري: {customerTicket.eta} دقيقة</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -237,11 +309,7 @@ const Index = () => {
                   <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
                     <p className="text-sm text-slate-500 dark:text-slate-400">تتبع الحالة</p>
                     <div className="mt-3 space-y-3">
-                      {[
-                        ["في الانتظار", 70],
-                        ["قيد الخدمة", 18],
-                        ["تم الانتهاء", 12],
-                      ].map(([label, value]) => (
+                      {[["في الانتظار", 70], ["قيد الخدمة", 18], ["تم الانتهاء", 12]].map(([label, value]) => (
                         <div key={label as string}>
                           <div className="mb-1 flex items-center justify-between text-sm"><span>{label as string}</span><span>{value}%</span></div>
                           <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-2 rounded-full bg-sky-500" style={{ width: `${value}%` }} /></div>
@@ -266,11 +334,14 @@ const Index = () => {
                     <div className="mt-5 flex items-center justify-center gap-2 text-emerald-300"><Volume2 className="h-5 w-5" />تنبيه صوتي عند التغيير</div>
                   </div>
                   <div className="space-y-3">
-                    {queues[0].next.map((ticket, index) => (
-                      <div key={ticket} className="rounded-[1.5rem] bg-white/5 p-4">
-                        <div className="flex items-center justify-between"><span className="text-slate-400">التالي #{index + 1}</span><span className="font-black text-white">{ticket}</span></div>
-                      </div>
-                    ))}
+                    {queues[0].current < 0 ? null : queues[0] && Array.from({ length: 3 }).map((_, index) => {
+                      const ticketNumber = queues[0].current + index + 1;
+                      return (
+                        <div key={ticketNumber} className="rounded-[1.5rem] bg-white/5 p-4">
+                          <div className="flex items-center justify-between"><span className="text-slate-400">التالي #{index + 1}</span><span className="font-black text-white">A-{String(ticketNumber).padStart(3, "0")}</span></div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
