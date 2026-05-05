@@ -13,14 +13,10 @@ import { Bell, ChartBar, CheckCircle2, Clock3, Copy, LayoutGrid, QrCode, Refresh
 import { toast } from "sonner";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 
-type QueueState = {
-  id: string;
-  name: string;
-  prefix: string;
-  current: number;
-  waiting: number;
-  averageMinutes: number;
-};
+type QueueState = { id: string; name: string; prefix: string; current: number; waiting: number; averageMinutes: number };
+type CustomerTicket = { ticket: string; queueName: string; eta: number; name: string; phone: string };
+type JoinedCustomer = CustomerTicket & { status: "waiting" | "in-progress" | "done" };
+type LogEntry = { time: string; text: string };
 
 const stats = [
   { label: "مخدوم اليوم", value: "248", note: "+18% عن الأمس", icon: Users, tone: "bg-sky-100 text-sky-700" },
@@ -34,7 +30,7 @@ const initialQueues: QueueState[] = [
   { id: "support", name: "خدمة العملاء", prefix: "C", current: 91, waiting: 11, averageMinutes: 16 },
 ];
 
-const activity = [
+const initialActivity: LogEntry[] = [
   { time: "10:12", text: "تم استدعاء التذكرة A-124 في فرع الرياض" },
   { time: "10:06", text: "انضم 7 عملاء عبر رمز QR" },
   { time: "09:58", text: "تم إرسال إشعار واتساب إلى العميل B-038" },
@@ -51,25 +47,108 @@ const Index = () => {
   const [selectedQueueId, setSelectedQueueId] = useState(initialQueues[0].id);
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
-  const [customerTicket, setCustomerTicket] = useState<{ ticket: string; queueName: string; eta: number } | null>(null);
+  const [customerTicket, setCustomerTicket] = useState<CustomerTicket | null>(null);
+  const [joinedCustomers, setJoinedCustomers] = useState<JoinedCustomer[]>([]);
+  const [activity, setActivity] = useState<LogEntry[]>(initialActivity);
+  const [tvTicketIndex, setTvTicketIndex] = useState(0);
 
   const progress = useMemo(() => 68, []);
   const selectedQueue = queues.find((queue) => queue.id === selectedQueueId) ?? queues[0];
 
+  const addActivity = (text: string) => {
+    setActivity((current) => [{ time: new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" }), text }, ...current].slice(0, 8));
+  };
+
+  const notifyCustomer = (ticket: string, name: string, phone: string) => {
+    const message = `تم استدعاء التذكرة ${ticket} للعميل ${name} على الرقم ${phone}.`;
+    toast.success(`تم إرسال إشعار للعميل ${ticket}`);
+    addActivity(`تم إرسال إشعار للعميل ${name} على ${phone} عند استدعاء ${ticket}`);
+    if (push) toast(message);
+  };
+
   const handleJoinQueue = () => {
+    if (!customerName.trim() || !customerPhone.trim()) {
+      toast.error("يرجى إدخال الاسم ورقم الجوال");
+      return;
+    }
+
     const nextNumber = selectedQueue.current + selectedQueue.waiting + 1;
     const ticket = `${selectedQueue.prefix}-${String(nextNumber).padStart(3, "0")}`;
     const eta = selectedQueue.averageMinutes * (selectedQueue.waiting + 1);
+    const ticketData = { ticket, queueName: selectedQueue.name, eta, name: customerName.trim(), phone: customerPhone.trim() };
 
-    setQueues((currentQueues) =>
-      currentQueues.map((queue) =>
-        queue.id === selectedQueue.id ? { ...queue, waiting: queue.waiting + 1 } : queue,
-      ),
-    );
-
-    setCustomerTicket({ ticket, queueName: selectedQueue.name, eta });
+    setQueues((currentQueues) => currentQueues.map((queue) => (queue.id === selectedQueue.id ? { ...queue, waiting: queue.waiting + 1 } : queue)));
+    setCustomerTicket(ticketData);
+    setJoinedCustomers((current) => [{ ...ticketData, status: "waiting" as const }, ...current].slice(0, 5));
+    addActivity(`انضم ${ticketData.name} إلى ${ticketData.queueName} عبر QR وحصل على ${ticketData.ticket}`);
     toast.success(`تم إصدار التذكرة ${ticket} بنجاح`);
   };
+
+  const handleClearCustomerForm = () => {
+    setCustomerName("");
+    setCustomerPhone("");
+    setCustomerTicket(null);
+    toast.success("تمت إعادة نموذج العميل");
+  };
+
+  const handleQueueAction = (queueId: string, action: "next" | "recall" | "skip") => {
+    const queue = queues.find((item) => item.id === queueId);
+    if (!queue) return;
+
+    const currentTicket = `${queue.prefix}-${String(queue.current).padStart(3, "0")}`;
+
+    setQueues((currentQueues) =>
+      currentQueues.map((item) => {
+        if (item.id !== queueId) return item;
+        if (action === "next") return { ...item, current: item.current + 1, waiting: Math.max(item.waiting - 1, 0) };
+        if (action === "skip") return { ...item, current: item.current + 1 };
+        return item;
+      }),
+    );
+
+    const message = action === "next" ? `تم استدعاء ${currentTicket}` : action === "skip" ? `تم تخطي ${currentTicket}` : `تمت إعادة نداء ${currentTicket}`;
+    addActivity(`${message} في ${queue.name}`);
+    toast.success(message);
+
+    const calledCustomer = joinedCustomers.find((customer) => customer.ticket === currentTicket && customer.status === "waiting");
+    if (action === "next" && calledCustomer) {
+      notifyCustomer(calledCustomer.ticket, calledCustomer.name, calledCustomer.phone);
+      setJoinedCustomers((current) => current.map((customer) => (customer.ticket === calledCustomer.ticket ? { ...customer, status: "in-progress" } : customer)));
+    }
+  };
+
+  const handleToggleCustomerStatus = (ticket: string, status: JoinedCustomer["status"]) => {
+    setJoinedCustomers((current) => current.map((customer) => (customer.ticket === ticket ? { ...customer, status } : customer)));
+    addActivity(`تم تحديث حالة ${ticket} إلى ${status === "waiting" ? "في الانتظار" : status === "in-progress" ? "قيد الخدمة" : "مكتمل"}`);
+  };
+
+  const handleCopyTicket = (ticket: string) => {
+    navigator.clipboard.writeText(ticket);
+    toast.success(`تم نسخ ${ticket}`);
+  };
+
+  const handleGenerateQr = () => {
+    toast.success(`تم تحديث رمز QR للصف: ${selectedQueue.name}`);
+  };
+
+  const handleSaveSettings = () => {
+    toast.success("تم حفظ إعدادات المنصة");
+  };
+
+  const handleRefreshStats = () => {
+    toast.success("تم تحديث الإحصاءات مباشرة");
+    addActivity("تم تحديث لوحة الإحصاءات المباشرة");
+  };
+
+  const handleFocusTvMode = () => {
+    setTvTicketIndex((current) => (current + 1) % 3);
+    toast.success("تم تدوير شاشة العرض");
+  };
+
+  const displayTickets = Array.from({ length: 3 }).map((_, index) => {
+    const ticketNumber = queues[0].current + tvTicketIndex + index + 1;
+    return `A-${String(ticketNumber).padStart(3, "0")}`;
+  });
 
   return (
     <div dir="rtl" className={darkMode ? "dark" : ""}>
@@ -118,6 +197,7 @@ const Index = () => {
                     <span className="text-sm text-slate-500 dark:text-slate-400">إشعارات فورية</span>
                     <Switch checked={push} onCheckedChange={setPush} />
                   </div>
+                  <Button className="rounded-full bg-slate-950 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200" onClick={handleSaveSettings}>حفظ الإعدادات</Button>
                 </div>
               </div>
 
@@ -139,6 +219,17 @@ const Index = () => {
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Button className="rounded-full bg-sky-600 hover:bg-sky-500" onClick={handleRefreshStats}>
+                  <ChartBar className="ml-2 h-4 w-4" />
+                  تحديث الإحصاءات
+                </Button>
+                <Button variant="secondary" className="rounded-full" onClick={handleGenerateQr}>
+                  <QrCode className="ml-2 h-4 w-4" />
+                  تحديث QR
+                </Button>
               </div>
 
               <div className="mt-6">
@@ -167,7 +258,7 @@ const Index = () => {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {queues.map((queue) => (
-                    <div key={queue.name} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                    <div key={queue.id} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                           <div className="flex items-center gap-2">
@@ -176,9 +267,10 @@ const Index = () => {
                           </div>
                           <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">الحالي: {queue.prefix}-{String(queue.current).padStart(3, "0")}</p>
                         </div>
-                        <div className="flex gap-2">
-                          <Button size="sm" className="rounded-full bg-sky-600 hover:bg-sky-500"><CheckCircle2 className="ml-2 h-4 w-4" />استدعاء</Button>
-                          <Button size="sm" variant="secondary" className="rounded-full"><RefreshCcw className="ml-2 h-4 w-4" />إعادة</Button>
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" className="rounded-full bg-sky-600 hover:bg-sky-500" onClick={() => handleQueueAction(queue.id, "next")}><CheckCircle2 className="ml-2 h-4 w-4" />استدعاء</Button>
+                          <Button size="sm" variant="secondary" className="rounded-full" onClick={() => handleQueueAction(queue.id, "recall")}><RefreshCcw className="ml-2 h-4 w-4" />إعادة</Button>
+                          <Button size="sm" variant="outline" className="rounded-full" onClick={() => handleQueueAction(queue.id, "skip")}>تخطي</Button>
                         </div>
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
@@ -194,8 +286,13 @@ const Index = () => {
 
               <Card className="rounded-[2rem] border-0 bg-[#0f172a] text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold">إحصاءات مباشرة</CardTitle>
-                  <CardDescription className="text-slate-300">عرض سريع لأهم مؤشرات الأداء</CardDescription>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-2xl font-bold">إحصاءات مباشرة</CardTitle>
+                      <CardDescription className="text-slate-300">عرض سريع لأهم مؤشرات الأداء</CardDescription>
+                    </div>
+                    <Button variant="secondary" className="rounded-full bg-white/10 text-white hover:bg-white/20" onClick={handleRefreshStats}>تحديث</Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-3">
@@ -236,13 +333,7 @@ const Index = () => {
                     <p className="text-sm text-slate-500 dark:text-slate-400">اختر الصف الذي تريد الانضمام إليه</p>
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">
                       {queues.map((queue) => (
-                        <Button
-                          key={queue.id}
-                          type="button"
-                          variant={selectedQueueId === queue.id ? "default" : "secondary"}
-                          className="rounded-full"
-                          onClick={() => setSelectedQueueId(queue.id)}
-                        >
+                        <Button key={queue.id} type="button" variant={selectedQueueId === queue.id ? "default" : "secondary"} className="rounded-full" onClick={() => setSelectedQueueId(queue.id)}>
                           {queue.name}
                         </Button>
                       ))}
@@ -282,6 +373,7 @@ const Index = () => {
                     <Ticket className="ml-2 h-4 w-4" />
                     احصل على تذكرتك
                   </Button>
+                  <Button variant="outline" className="w-full rounded-full" onClick={handleClearCustomerForm}>مسح بيانات العميل</Button>
 
                   {customerTicket && (
                     <div className="rounded-[1.75rem] border border-emerald-200 bg-emerald-50 p-5 text-center dark:border-emerald-900 dark:bg-emerald-950/20">
@@ -298,25 +390,30 @@ const Index = () => {
 
               <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold">الإشعارات الذكية</CardTitle>
-                  <CardDescription>تنبيه عند اقتراب الدور عبر واتساب أو SMS</CardDescription>
+                  <CardTitle className="text-2xl font-bold">العملاء المنضمون عبر QR</CardTitle>
+                  <CardDescription>آخر عمليات التسجيل تظهر مباشرة هنا</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="rounded-[1.5rem] bg-emerald-50 p-4 dark:bg-emerald-950/20">
-                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300"><Bell className="h-5 w-5" />رسالة جاهزة</div>
-                    <p className="mt-2 text-slate-700 dark:text-slate-300">"مرحبًا، حان دورك الآن. الرجاء التوجه إلى الكاونتر."</p>
-                  </div>
-                  <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
-                    <p className="text-sm text-slate-500 dark:text-slate-400">تتبع الحالة</p>
-                    <div className="mt-3 space-y-3">
-                      {[["في الانتظار", 70], ["قيد الخدمة", 18], ["تم الانتهاء", 12]].map(([label, value]) => (
-                        <div key={label as string}>
-                          <div className="mb-1 flex items-center justify-between text-sm"><span>{label as string}</span><span>{value}%</span></div>
-                          <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-2 rounded-full bg-sky-500" style={{ width: `${value}%` }} /></div>
+                <CardContent className="space-y-3">
+                  {joinedCustomers.length === 0 ? (
+                    <div className="rounded-[1.5rem] bg-slate-50 p-4 text-slate-500 dark:bg-white/5 dark:text-slate-300">لا يوجد عملاء مسجلون بعد.</div>
+                  ) : (
+                    joinedCustomers.map((customer) => (
+                      <div key={customer.ticket} className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="font-bold text-slate-950 dark:text-white">{customer.name}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{customer.ticket} · {customer.queueName}</p>
+                          </div>
+                          <Badge className="rounded-full bg-sky-100 text-sky-700">{customer.status === "waiting" ? "في الانتظار" : customer.status === "in-progress" ? "قيد الخدمة" : "مكتمل"}</Badge>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <Button size="sm" variant="secondary" className="rounded-full" onClick={() => handleToggleCustomerStatus(customer.ticket, "in-progress")}>بدء الخدمة</Button>
+                          <Button size="sm" variant="outline" className="rounded-full" onClick={() => handleToggleCustomerStatus(customer.ticket, "done")}>إنهاء</Button>
+                          <Button size="sm" variant="ghost" className="rounded-full" onClick={() => handleCopyTicket(customer.ticket)}>نسخ الرقم</Button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -324,8 +421,13 @@ const Index = () => {
             <TabsContent value="tv" className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
               <Card className="rounded-[2rem] border-0 bg-slate-950 text-white shadow-[0_18px_60px_rgba(15,23,42,0.28)]">
                 <CardHeader>
-                  <CardTitle className="text-2xl font-bold">TV Mode</CardTitle>
-                  <CardDescription className="text-slate-300">شاشة كاملة لعرض الأرقام الحالية والقادمة</CardDescription>
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-2xl font-bold">TV Mode</CardTitle>
+                      <CardDescription className="text-slate-300">شاشة كاملة لعرض الأرقام الحالية والقادمة</CardDescription>
+                    </div>
+                    <Button variant="secondary" className="rounded-full bg-white/10 text-white hover:bg-white/20" onClick={handleFocusTvMode}>تدوير العرض</Button>
+                  </div>
                 </CardHeader>
                 <CardContent className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
                   <div className="rounded-[2rem] bg-white/5 p-6 text-center">
@@ -334,14 +436,11 @@ const Index = () => {
                     <div className="mt-5 flex items-center justify-center gap-2 text-emerald-300"><Volume2 className="h-5 w-5" />تنبيه صوتي عند التغيير</div>
                   </div>
                   <div className="space-y-3">
-                    {queues[0].current < 0 ? null : queues[0] && Array.from({ length: 3 }).map((_, index) => {
-                      const ticketNumber = queues[0].current + index + 1;
-                      return (
-                        <div key={ticketNumber} className="rounded-[1.5rem] bg-white/5 p-4">
-                          <div className="flex items-center justify-between"><span className="text-slate-400">التالي #{index + 1}</span><span className="font-black text-white">A-{String(ticketNumber).padStart(3, "0")}</span></div>
-                        </div>
-                      );
-                    })}
+                    {displayTickets.map((ticket, index) => (
+                      <div key={ticket} className="rounded-[1.5rem] bg-white/5 p-4">
+                        <div className="flex items-center justify-between"><span className="text-slate-400">التالي #{index + 1}</span><span className="font-black text-white">{ticket}</span></div>
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -403,10 +502,10 @@ const Index = () => {
                   <ScrollArea className="h-[320px] pr-4">
                     <div className="space-y-3">
                       {apiItems.map((item) => (
-                        <div key={item} className="flex items-center justify-between rounded-[1.25rem] bg-white/10 px-4 py-3">
+                        <button key={item} type="button" className="flex w-full items-center justify-between rounded-[1.25rem] bg-white/10 px-4 py-3 text-right transition hover:bg-white/15" onClick={() => toast.success(`تم نسخ ${item}`)}>
                           <span>{item}</span>
                           <Copy className="h-4 w-4 text-slate-300" />
-                        </div>
+                        </button>
                       ))}
                     </div>
                     <Separator className="my-5 bg-white/10" />
@@ -430,7 +529,7 @@ const Index = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {activity.map((item) => (
-                  <div key={item.time} className="flex items-start gap-3 rounded-[1.25rem] bg-slate-50 p-4 dark:bg-white/5">
+                  <div key={`${item.time}-${item.text}`} className="flex items-start gap-3 rounded-[1.25rem] bg-slate-50 p-4 dark:bg-white/5">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback className="bg-sky-600 text-white">{item.time.slice(0, 2)}</AvatarFallback>
                     </Avatar>
@@ -460,6 +559,35 @@ const Index = () => {
               </CardContent>
             </Card>
           </div>
+
+          <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+            <CardHeader>
+              <CardTitle className="text-2xl font-bold">سجل العملاء عبر QR</CardTitle>
+              <CardDescription>إدارة سريعة لتجربة التسجيل والنداء</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {joinedCustomers.length === 0 ? (
+                <div className="rounded-[1.5rem] bg-slate-50 p-4 text-slate-500 dark:bg-white/5 dark:text-slate-300">لا يوجد عملاء مسجلون بعد.</div>
+              ) : (
+                joinedCustomers.map((customer) => (
+                  <div key={customer.ticket} className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="font-bold text-slate-950 dark:text-white">{customer.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">{customer.ticket}</p>
+                      </div>
+                      <Badge className="rounded-full bg-sky-100 text-sky-700">{customer.status === "waiting" ? "في الانتظار" : customer.status === "in-progress" ? "قيد الخدمة" : "مكتمل"}</Badge>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <Button size="sm" variant="secondary" className="rounded-full" onClick={() => handleToggleCustomerStatus(customer.ticket, "in-progress")}>بدء الخدمة</Button>
+                      <Button size="sm" variant="outline" className="rounded-full" onClick={() => handleToggleCustomerStatus(customer.ticket, "done")}>إنهاء</Button>
+                      <Button size="sm" variant="ghost" className="rounded-full" onClick={() => handleCopyTicket(customer.ticket)}>نسخ الرقم</Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
 
           <MadeWithDyad />
         </main>
