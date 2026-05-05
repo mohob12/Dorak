@@ -3,291 +3,396 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Award, CheckCircle2, Lightbulb, RotateCcw, Sparkles, Star } from "lucide-react";
-import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
+import { Bell, ChartBar, CheckCircle2, Clock3, Copy, LayoutGrid, Monitor, QrCode, RefreshCcw, Sparkles, Ticket, TrendingUp, Users, Volume2, Wifi, Zap } from "lucide-react";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 
-type Puzzle = {
-  question: string;
-  hint: string;
-  options: string[];
-  answer: string;
-};
+const stats = [
+  { label: "مخدوم اليوم", value: "248", note: "+18% عن الأمس", icon: Users, tone: "bg-sky-100 text-sky-700" },
+  { label: "متوسط الانتظار", value: "12 د", note: "أقل بـ 3 دقائق", icon: Clock3, tone: "bg-emerald-100 text-emerald-700" },
+  { label: "الأفرع النشطة", value: "04", note: "متصل الآن", icon: LayoutGrid, tone: "bg-violet-100 text-violet-700" },
+];
 
-const puzzles: Puzzle[] = [
-  {
-    question: "أنا أصفر وأحبني القرود، ما أنا؟",
-    hint: "فكّر في فاكهة لذيذة.",
-    options: ["تفاحة", "موز", "برتقال"],
-    answer: "موز",
-  },
-  {
-    question: "أملك أربع عجلات وأساعدك على السفر، ما أنا؟",
-    hint: "وسيلة نقل",
-    options: ["سيارة", "طائرة", "سفينة"],
-    answer: "سيارة",
-  },
-  {
-    question: "أضيء في السماء ليلًا، ما أنا؟",
-    hint: "أظهر مع القمر في الليل.",
-    options: ["الشمس", "النجمة", "الثلج"],
-    answer: "النجمة",
-  },
-  {
-    question: "ما الشيء الذي نرتديه في أقدامنا؟",
-    hint: "نستخدمه للمشي والخروج.",
-    options: ["قبعة", "حذاء", "قميص"],
-    answer: "حذاء",
-  },
-  {
-    question: "لدي صفحات كثيرة ونقرأني، ما أنا؟",
-    hint: "تحبه الكتب.",
-    options: ["كتاب", "كرسي", "باب"],
-    answer: "كتاب",
-  },
+const queues = [
+  { name: "طلبات الكافيه", now: "A-124", next: ["A-125", "A-126", "A-127"], waiting: 8, color: "bg-amber-100 text-amber-700" },
+  { name: "الاستلام السريع", now: "B-038", next: ["B-039", "B-040", "B-041"], waiting: 4, color: "bg-sky-100 text-sky-700" },
+  { name: "خدمة العملاء", now: "C-091", next: ["C-092", "C-093", "C-094"], waiting: 11, color: "bg-rose-100 text-rose-700" },
+];
+
+const activity = [
+  { time: "10:12", text: "تم استدعاء التذكرة A-124 في فرع الرياض" },
+  { time: "10:06", text: "انضم 7 عملاء عبر رمز QR" },
+  { time: "09:58", text: "تم إرسال إشعار واتساب إلى العميل B-038" },
+  { time: "09:44", text: "تغيير حالة التذكرة C-088 إلى مكتمل" },
+];
+
+const apiItems = [
+  "POST /auth/login",
+  "GET /branches/:id/queues",
+  "POST /queues/:id/next",
+  "POST /tickets/join",
+  "POST /notifications/whatsapp",
 ];
 
 const Index = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [completed, setCompleted] = useState(false);
-
-  const currentPuzzle = puzzles[currentIndex];
-
-  const progress = useMemo(
-    () => ((currentIndex + (completed ? 1 : 0)) / puzzles.length) * 100,
-    [currentIndex, completed],
-  );
-
-  const handleAnswer = (option: string) => {
-    if (selectedAnswer || completed) return;
-
-    setSelectedAnswer(option);
-
-    if (option === currentPuzzle.answer) {
-      setScore((value) => value + 1);
-      toast.success("أحسنت! إجابة رائعة ✨");
-    } else {
-      toast.error("لا بأس، جرّب مرة أخرى!");
-    }
-
-    window.setTimeout(() => {
-      const nextIndex = currentIndex + 1;
-
-      if (nextIndex >= puzzles.length) {
-        setCompleted(true);
-      } else {
-        setCurrentIndex(nextIndex);
-      }
-
-      setSelectedAnswer(null);
-    }, 900);
-  };
-
-  const restartGame = () => {
-    setCurrentIndex(0);
-    setScore(0);
-    setSelectedAnswer(null);
-    setCompleted(false);
-    toast.success("بدأنا من جديد! هيا نلعب 🎉");
-  };
+  const [darkMode, setDarkMode] = useState(true);
+  const [sound, setSound] = useState(true);
+  const [push, setPush] = useState(false);
+  const progress = useMemo(() => 68, []);
 
   return (
-    <div className="min-h-screen bg-[#f6fbff] text-slate-800">
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute left-[-80px] top-10 h-40 w-40 rounded-full bg-[#ffd8a8]/70 blur-3xl" />
-        <div className="absolute right-[-60px] top-32 h-44 w-44 rounded-full bg-[#c7f9cc]/70 blur-3xl" />
-        <div className="absolute bottom-16 left-1/4 h-52 w-52 rounded-full bg-[#d7e8ff]/80 blur-3xl" />
-      </div>
+    <div dir="rtl" className={darkMode ? "dark" : ""}>
+      <div className="min-h-screen bg-[hsl(var(--background))] text-[hsl(var(--foreground))] transition-colors">
+        <div className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute right-[-8rem] top-[-6rem] h-72 w-72 rounded-full bg-sky-200/40 blur-3xl" />
+          <div className="absolute left-[-5rem] top-40 h-64 w-64 rounded-full bg-violet-200/30 blur-3xl" />
+          <div className="absolute bottom-0 right-1/3 h-80 w-80 rounded-full bg-emerald-200/25 blur-3xl" />
+        </div>
 
-      <main className="container mx-auto flex min-h-screen max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <section className="mb-6 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <Card className="overflow-hidden rounded-[2rem] border-0 bg-white/90 shadow-[0_20px_60px_rgba(104,140,255,0.18)] backdrop-blur">
+        <main className="container mx-auto flex min-h-screen max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+          <Card className="overflow-hidden rounded-[2rem] border border-white/60 bg-white/80 shadow-[0_24px_80px_rgba(59,130,246,0.12)] backdrop-blur dark:border-white/10 dark:bg-slate-950/70">
             <CardContent className="p-6 sm:p-8">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge className="rounded-full bg-amber-100 text-amber-700 hover:bg-amber-100">
-                  <Sparkles className="mr-1 h-3.5 w-3.5" />
-                  لعبة ألغاز للأطفال
-                </Badge>
-                <Badge variant="secondary" className="rounded-full">
-                  <Star className="mr-1 h-3.5 w-3.5 text-yellow-500" />
-                  ممتعة وسهلة
-                </Badge>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className="rounded-full bg-sky-100 text-sky-700 hover:bg-sky-100">
+                      <Sparkles className="ml-1 h-3.5 w-3.5" />
+                      SaaS لإدارة الطوابير
+                    </Badge>
+                    <Badge variant="secondary" className="rounded-full">
+                      <Wifi className="ml-1 h-3.5 w-3.5 text-emerald-500" />
+                      متعدد الفروع
+                    </Badge>
+                  </div>
+                  <div className="max-w-3xl space-y-3">
+                    <h1 className="text-3xl font-black leading-tight tracking-tight text-slate-950 dark:text-white sm:text-5xl">
+                      منصة عربية ذكية لتنظيم الطوابير
+                    </h1>
+                    <p className="text-base leading-7 text-slate-600 dark:text-slate-300 sm:text-lg">
+                      لوحة تحكم احترافية لأصحاب الأعمال، شاشة عرض للمحل، وواجهة QR بسيطة للعملاء — كل ذلك مع دعم RTL، الوضع الليلي، والتنبيهات اللحظية.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                  <div className="flex items-center justify-between gap-8">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">الوضع الليلي</span>
+                    <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+                  </div>
+                  <div className="flex items-center justify-between gap-8">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">الصوت</span>
+                    <Switch checked={sound} onCheckedChange={setSound} />
+                  </div>
+                  <div className="flex items-center justify-between gap-8">
+                    <span className="text-sm text-slate-500 dark:text-slate-400">إشعارات فورية</span>
+                    <Switch checked={push} onCheckedChange={setPush} />
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-5 space-y-3">
-                <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
-                  هيا نحلّ الألغاز ونكسب النجوم!
-                </h1>
-                <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  اختر الإجابة الصحيحة، واحصل على نقاط، وتعلّم كلمات جديدة بطريقة مرحة ومليئة بالألوان.
-                </p>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-3xl bg-[#eef4ff] p-4">
-                  <p className="text-sm font-medium text-slate-500">الدرجة</p>
-                  <p className="mt-1 text-3xl font-bold text-[#4f6bed]">
-                    {score}/{puzzles.length}
-                  </p>
-                </div>
-                <div className="rounded-3xl bg-[#fff6e8] p-4">
-                  <p className="text-sm font-medium text-slate-500">المستوى</p>
-                  <p className="mt-1 text-3xl font-bold text-[#d9891f]">
-                    {completed ? "مكتمل" : `#${currentIndex + 1}`}
-                  </p>
-                </div>
-                <div className="rounded-3xl bg-[#e9fbef] p-4">
-                  <p className="text-sm font-medium text-slate-500">النجوم</p>
-                  <p className="mt-1 flex items-center gap-1 text-3xl font-bold text-[#2f9e44]">
-                    <Award className="h-8 w-8" />
-                    {score}
-                  </p>
-                </div>
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                {stats.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <div key={item.label} className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{item.label}</p>
+                          <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">{item.value}</p>
+                        </div>
+                        <div className={`rounded-2xl p-3 ${item.tone}`}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                      </div>
+                      <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{item.note}</p>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="mt-6">
-                <div className="mb-2 flex items-center justify-between text-sm text-slate-500">
-                  <span>التقدّم</span>
-                  <span>{Math.round(progress)}%</span>
+                <div className="mb-2 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+                  <span>نسبة الإشغال اليومي</span>
+                  <span>{progress}%</span>
                 </div>
-                <Progress value={progress} className="h-3 rounded-full bg-slate-200" />
+                <Progress value={progress} className="h-3 rounded-full bg-slate-200 dark:bg-slate-800" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="rounded-[2rem] border-0 bg-[#1f3a68] text-white shadow-[0_20px_60px_rgba(31,58,104,0.25)]">
-            <CardContent className="flex h-full flex-col justify-between p-6 sm:p-8">
-              <div>
-                <div className="inline-flex rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white/90">
-                  <Lightbulb className="mr-2 h-4 w-4 text-yellow-300" />
-                  نصيحة
-                </div>
-                <p className="mt-4 text-2xl font-bold leading-9">
-                  اقرأ اللغز جيدًا، ثم اختر الإجابة التي تبدو صحيحة.
-                </p>
-                <p className="mt-3 text-sm leading-6 text-white/75">
-                  كل إجابة صحيحة تمنحك نجمة وتقرّبك من نهاية اللعبة.
-                </p>
-              </div>
+          <Tabs defaultValue="operations" className="space-y-6">
+            <TabsList className="grid h-auto w-full grid-cols-4 rounded-[1.4rem] bg-slate-100 p-2 dark:bg-white/5">
+              <TabsTrigger className="rounded-[1rem] py-3 data-[state=active]:bg-white data-[state=active]:text-slate-950 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-white" value="operations">العمليات</TabsTrigger>
+              <TabsTrigger className="rounded-[1rem] py-3 data-[state=active]:bg-white data-[state=active]:text-slate-950 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-white" value="customer">العميل</TabsTrigger>
+              <TabsTrigger className="rounded-[1rem] py-3 data-[state=active]:bg-white data-[state=active]:text-slate-950 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-white" value="tv">شاشة العرض</TabsTrigger>
+              <TabsTrigger className="rounded-[1rem] py-3 data-[state=active]:bg-white data-[state=active]:text-slate-950 dark:data-[state=active]:bg-slate-900 dark:data-[state=active]:text-white" value="architecture">البنية</TabsTrigger>
+            </TabsList>
 
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                <div className="rounded-3xl bg-white/10 p-4">
-                  <p className="text-sm text-white/70">عدد الألغاز</p>
-                  <p className="mt-1 text-2xl font-bold">{puzzles.length}</p>
-                </div>
-                <div className="rounded-3xl bg-white/10 p-4">
-                  <p className="text-sm text-white/70">حالتك الآن</p>
-                  <p className="mt-1 text-2xl font-bold">{completed ? "فائز!" : "تلعب الآن"}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+            <TabsContent value="operations" className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">لوحة الموظف</CardTitle>
+                  <CardDescription>استدعاء التالي، تخطي، وإعادة النداء بلمسة واحدة</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {queues.map((queue) => (
+                    <div key={queue.name} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4 dark:border-white/10 dark:bg-white/5">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Badge className={`rounded-full ${queue.color}`}>{queue.waiting} في الانتظار</Badge>
+                            <p className="text-lg font-bold text-slate-950 dark:text-white">{queue.name}</p>
+                          </div>
+                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">الحالي: {queue.now}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" className="rounded-full bg-sky-600 hover:bg-sky-500"><CheckCircle2 className="ml-2 h-4 w-4" />استدعاء</Button>
+                          <Button size="sm" variant="secondary" className="rounded-full"><RefreshCcw className="ml-2 h-4 w-4" />إعادة</Button>
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {queue.next.map((ticket) => (
+                          <Badge key={ticket} variant="outline" className="rounded-full bg-white dark:bg-slate-950">{ticket}</Badge>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-        <section className="grid flex-1 gap-6 lg:grid-cols-[1fr_0.55fr]">
-          <Card className="rounded-[2rem] border-0 bg-white/95 shadow-[0_18px_50px_rgba(79,107,237,0.12)]">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-2xl font-bold text-slate-900">
-                {completed ? "أحسنت! أنهيت اللعبة" : `لغز ${currentIndex + 1}`}
-              </CardTitle>
-              <CardDescription className="text-base text-slate-500">
-                {completed
-                  ? "لقد انتهيت من كل الألغاز، يمكنك إعادة اللعب للحصول على نتيجة أفضل."
-                  : currentPuzzle.question}
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent className="space-y-5 p-6 pt-0 sm:p-8 sm:pt-0">
-              {!completed ? (
-                <>
-                  <div className="rounded-[1.75rem] bg-[#f8fbff] p-5 text-slate-700">
-                    <p className="text-sm font-medium uppercase tracking-wide text-slate-400">تلميح</p>
-                    <p className="mt-2 text-lg font-semibold">{currentPuzzle.hint}</p>
+              <Card className="rounded-[2rem] border-0 bg-[#0f172a] text-white shadow-[0_18px_60px_rgba(15,23,42,0.2)]">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">إحصاءات مباشرة</CardTitle>
+                  <CardDescription className="text-slate-300">عرض سريع لأهم مؤشرات الأداء</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-[1.5rem] bg-white/10 p-4">
+                      <ChartBar className="h-6 w-6 text-sky-300" />
+                      <p className="mt-3 text-sm text-slate-300">مخدوم اليوم</p>
+                      <p className="mt-1 text-3xl font-black">248</p>
+                    </div>
+                    <div className="rounded-[1.5rem] bg-white/10 p-4">
+                      <TrendingUp className="h-6 w-6 text-emerald-300" />
+                      <p className="mt-3 text-sm text-slate-300">ذروة الساعة</p>
+                      <p className="mt-1 text-3xl font-black">1:00 م</p>
+                    </div>
                   </div>
-
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {currentPuzzle.options.map((option) => {
-                      const isSelected = selectedAnswer === option;
-                      const isCorrect = completed ? false : selectedAnswer === currentPuzzle.answer && option === currentPuzzle.answer;
-                      const isWrong = selectedAnswer === option && option !== currentPuzzle.answer;
-
-                      return (
-                        <Button
-                          key={option}
-                          onClick={() => handleAnswer(option)}
-                          disabled={!!selectedAnswer}
-                          className={[
-                            "h-auto rounded-[1.5rem] px-5 py-6 text-lg font-semibold shadow-sm transition-transform hover:scale-[1.02]",
-                            option === "موز" && "bg-[#ffd166] text-slate-900 hover:bg-[#ffcc4d]",
-                            option === "سيارة" && "bg-[#8ecae6] text-slate-900 hover:bg-[#77bddf]",
-                            option === "النجمة" && "bg-[#ffafcc] text-slate-900 hover:bg-[#ff9cc2]",
-                            option === "حذاء" && "bg-[#a8dadc] text-slate-900 hover:bg-[#93d1d4]",
-                            option === "كتاب" && "bg-[#cdb4db] text-slate-900 hover:bg-[#c29fd6]",
-                            isSelected && "ring-4 ring-offset-2 ring-offset-white",
-                            isCorrect && "ring-4 ring-green-400",
-                            isWrong && "ring-4 ring-red-300",
-                          ]
-                            .filter(Boolean)
-                            .join(" ")}
-                        >
-                          {isSelected && <CheckCircle2 className="mr-2 h-5 w-5" />}
-                          {option}
-                        </Button>
-                      );
-                    })}
+                  <div className="rounded-[1.5rem] bg-white/10 p-4">
+                    <p className="text-sm text-slate-300">إشعارات القناة</p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span>واتساب</span>
+                      <span className="font-bold text-emerald-300">مفعل</span>
+                    </div>
+                    <div className="mt-2 flex items-center justify-between">
+                      <span>SMS</span>
+                      <span className="font-bold text-amber-300">اختياري</span>
+                    </div>
                   </div>
-                </>
-              ) : (
-                <div className="rounded-[1.75rem] bg-[#f0fff4] p-6 text-center">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#2f9e44] text-white">
-                    <Award className="h-10 w-10" />
-                  </div>
-                  <h2 className="mt-4 text-3xl font-extrabold text-slate-900">رائع جدًا!</h2>
-                  <p className="mt-2 text-lg text-slate-600">
-                    حصلت على <span className="font-bold text-[#2f9e44]">{score}</span> نجوم من أصل{" "}
-                    <span className="font-bold">{puzzles.length}</span>.
-                  </p>
-                  <Button
-                    onClick={restartGame}
-                    size="lg"
-                    className="mt-6 rounded-full bg-[#4f6bed] px-8 hover:bg-[#3f5ad7]"
-                  >
-                    <RotateCcw className="mr-2 h-5 w-5" />
-                    العب مرة أخرى
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          <Card className="rounded-[2rem] border-0 bg-white/95 shadow-[0_18px_50px_rgba(79,107,237,0.12)]">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-xl font-bold text-slate-900">قواعد بسيطة</CardTitle>
-              <CardDescription className="text-slate-500">لعبة مناسبة للأطفال وتعمل على الهاتف والكمبيوتر</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3 p-6 pt-0 sm:p-8 sm:pt-0">
-              {[
-                "اختر الإجابة الصحيحة من بين 3 خيارات.",
-                "إذا كانت الإجابة صحيحة تحصل على نجمة.",
-                "يمكنك إعادة اللعب في أي وقت.",
-              ].map((item, index) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl bg-slate-50 p-4">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#4f6bed] text-sm font-bold text-white">
-                    {index + 1}
+            <TabsContent value="customer" className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+              <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">انضمام العميل عبر QR</CardTitle>
+                  <CardDescription>لا يحتاج العميل إلى تسجيل دخول</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex aspect-square items-center justify-center rounded-[2rem] border-2 border-dashed border-sky-300 bg-sky-50 dark:border-sky-900 dark:bg-sky-950/20">
+                    <div className="text-center">
+                      <QrCode className="mx-auto h-16 w-16 text-sky-600" />
+                      <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">QR لصالة الانتظار</p>
+                    </div>
                   </div>
-                  <p className="pt-1 text-slate-700">{item}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </section>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">وقت الانتظار المتوقع</p>
+                      <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">12 دقيقة</p>
+                    </div>
+                    <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                      <p className="text-sm text-slate-500 dark:text-slate-400">رقمي الآن</p>
+                      <p className="mt-2 text-3xl font-black text-slate-950 dark:text-white">B-038</p>
+                    </div>
+                  </div>
+                  <Button className="w-full rounded-full bg-sky-600 hover:bg-sky-500"><Ticket className="ml-2 h-4 w-4" />احصل على تذكرتك</Button>
+                </CardContent>
+              </Card>
 
-        <div className="mt-6">
+              <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">الإشعارات الذكية</CardTitle>
+                  <CardDescription>تنبيه عند اقتراب الدور عبر واتساب أو SMS</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="rounded-[1.5rem] bg-emerald-50 p-4 dark:bg-emerald-950/20">
+                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300"><Bell className="h-5 w-5" />رسالة جاهزة</div>
+                    <p className="mt-2 text-slate-700 dark:text-slate-300">"مرحبًا، حان دورك الآن. الرجاء التوجه إلى الكاونتر."</p>
+                  </div>
+                  <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">تتبع الحالة</p>
+                    <div className="mt-3 space-y-3">
+                      {[
+                        ["في الانتظار", 70],
+                        ["قيد الخدمة", 18],
+                        ["تم الانتهاء", 12],
+                      ].map(([label, value]) => (
+                        <div key={label as string}>
+                          <div className="mb-1 flex items-center justify-between text-sm"><span>{label as string}</span><span>{value}%</span></div>
+                          <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-800"><div className="h-2 rounded-full bg-sky-500" style={{ width: `${value}%` }} /></div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="tv" className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <Card className="rounded-[2rem] border-0 bg-slate-950 text-white shadow-[0_18px_60px_rgba(15,23,42,0.28)]">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">TV Mode</CardTitle>
+                  <CardDescription className="text-slate-300">شاشة كاملة لعرض الأرقام الحالية والقادمة</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-[1.2fr_0.8fr]">
+                  <div className="rounded-[2rem] bg-white/5 p-6 text-center">
+                    <p className="text-sm text-slate-400">الرقم الآن</p>
+                    <p className="mt-3 text-7xl font-black tracking-tight text-sky-300">A-124</p>
+                    <div className="mt-5 flex items-center justify-center gap-2 text-emerald-300"><Volume2 className="h-5 w-5" />تنبيه صوتي عند التغيير</div>
+                  </div>
+                  <div className="space-y-3">
+                    {queues[0].next.map((ticket, index) => (
+                      <div key={ticket} className="rounded-[1.5rem] bg-white/5 p-4">
+                        <div className="flex items-center justify-between"><span className="text-slate-400">التالي #{index + 1}</span><span className="font-black text-white">{ticket}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">الموارد التشغيلية</CardTitle>
+                  <CardDescription>حالة الشبكة، تنبيه، واستقرار النظام</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <span>اتصال الشبكة</span>
+                    <Badge className="rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-100">مستقر</Badge>
+                  </div>
+                  <div className="flex items-center justify-between rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <span>الصوت</span>
+                    <Badge className="rounded-full bg-sky-100 text-sky-700 hover:bg-sky-100">{sound ? "مفعّل" : "متوقف"}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <span>الإشعارات</span>
+                    <Badge className="rounded-full bg-violet-100 text-violet-700 hover:bg-violet-100">{push ? "جاهزة" : "غير مفعلة"}</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="architecture" className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+              <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">البنية المقترحة</CardTitle>
+                  <CardDescription>نظام بسيط، قابل للتوسع، وعملي للشركات الصغيرة والمتوسطة</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                  <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <p className="font-semibold text-slate-950 dark:text-white">Frontend</p>
+                    <p>React SPA, RTL, Tailwind, shadcn/ui, PWA-ready</p>
+                  </div>
+                  <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <p className="font-semibold text-slate-950 dark:text-white">Backend</p>
+                    <p>Node.js + NestJS/Express, JWT auth, Socket.io realtime</p>
+                  </div>
+                  <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <p className="font-semibold text-slate-950 dark:text-white">Database</p>
+                    <p>PostgreSQL with multi-tenant isolation and branch support</p>
+                  </div>
+                  <div className="rounded-[1.5rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <p className="font-semibold text-slate-950 dark:text-white">Hosting</p>
+                    <p>Vercel for frontend, AWS/Supabase for backend and data</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-[2rem] border-0 bg-[#0f172a] text-white shadow-[0_18px_60px_rgba(15,23,42,0.28)]">
+                <CardHeader>
+                  <CardTitle className="text-2xl font-bold">API وعمليات السايس</CardTitle>
+                  <CardDescription className="text-slate-300">نقاط نهاية واضحة وخفيفة للبدء بسرعة</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ScrollArea className="h-[320px] pr-4">
+                    <div className="space-y-3">
+                      {apiItems.map((item) => (
+                        <div key={item} className="flex items-center justify-between rounded-[1.25rem] bg-white/10 px-4 py-3">
+                          <span>{item}</span>
+                          <Copy className="h-4 w-4 text-slate-300" />
+                        </div>
+                      ))}
+                    </div>
+                    <Separator className="my-5 bg-white/10" />
+                    <div className="space-y-3 text-sm text-slate-300">
+                      <p>• خطط الاشتراك: Free / Basic / Pro</p>
+                      <p>• التخصيص: شعار، ألوان، وفروع متعددة</p>
+                      <p>• التحليلات: وقت الانتظار، الذروة، وعدد المخدومين</p>
+                      <p>• النسخة الأولى: صفوف، شاشة TV، QR، ولوحة موظف</p>
+                    </div>
+                  </ScrollArea>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+            <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">الحركة الأخيرة</CardTitle>
+                <CardDescription>موجز حي للحالات والأحداث</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {activity.map((item) => (
+                  <div key={item.time} className="flex items-start gap-3 rounded-[1.25rem] bg-slate-50 p-4 dark:bg-white/5">
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="bg-sky-600 text-white">{item.time.slice(0, 2)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-semibold text-slate-950 dark:text-white">{item.text}</p>
+                        <span className="text-xs text-slate-400">{item.time}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card className="rounded-[2rem] border-0 bg-white/85 shadow-[0_18px_60px_rgba(15,23,42,0.08)] dark:bg-slate-950/70">
+              <CardHeader>
+                <CardTitle className="text-2xl font-bold">مخطط MVP</CardTitle>
+                <CardDescription>خطة إطلاق مختصرة وعملية</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                <p>1) إعداد الهوية العربية وRTL والموضوع الداكن.</p>
+                <p>2) بناء تسجيل الأعمال + الفروع + الاشتراكات.</p>
+                <p>3) تنفيذ إدارة الطوابير واستدعاء التالي وإعادة النداء.</p>
+                <p>4) صفحة العميل عبر QR مع وقت انتظار تقديري.</p>
+                <p>5) شاشة TV مع تنبيه صوتي وتحديث لحظي.</p>
+                <p>6) تحليلات أساسية + إشعارات واتساب/SMS.</p>
+              </CardContent>
+            </Card>
+          </div>
+
           <MadeWithDyad />
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 };
