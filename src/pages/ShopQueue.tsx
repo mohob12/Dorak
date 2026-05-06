@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import {
   Business,
   BusinessQueue,
@@ -15,7 +15,7 @@ import {
   fetchTickets,
   joinQueue,
 } from "@/lib/queue-db";
-import { CheckCircle2, Clock3, QrCode, Sparkles, Ticket as TicketIcon, Users } from "lucide-react";
+import { CheckCircle2, Clock3, Database, QrCode, Sparkles, Ticket as TicketIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const ShopQueue = () => {
@@ -45,7 +45,7 @@ const ShopQueue = () => {
   const estimatedMinutes = selectedQueue ? Math.max(waitingCount, 1) * selectedQueue.average_service_minutes : 0;
 
   const loadShop = async () => {
-    if (!id) return;
+    if (!id || !isSupabaseConfigured) return;
 
     const [businessData, queuesData, ticketsData] = await Promise.all([
       fetchBusiness(id),
@@ -67,7 +67,7 @@ const ShopQueue = () => {
   }, [id]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !isSupabaseConfigured) return;
 
     const channel = supabase
       .channel(`shop-${id}`)
@@ -95,6 +95,24 @@ const ShopQueue = () => {
     toast.success(`تم إصدار تذكرتك ${ticket.code}`);
     loadShop();
   };
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div dir="rtl" className="flex min-h-screen items-center justify-center bg-[#f3f8ff] p-4">
+        <Card className="w-full max-w-md rounded-[2rem] border-0 bg-white/90 text-center shadow-[0_24px_80px_rgba(2,132,199,0.16)]">
+          <CardHeader>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-100 text-cyan-700">
+              <Database className="h-7 w-7" />
+            </div>
+            <CardTitle className="text-2xl font-black text-slate-950">Supabase غير متصل بعد</CardTitle>
+            <CardDescription>
+              أضف متغيرات VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY ثم أعد تشغيل المعاينة.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (!business) {
     return (

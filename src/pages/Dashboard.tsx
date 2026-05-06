@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
 import {
   Business,
   BusinessQueue,
@@ -19,7 +19,7 @@ import {
   skipNextTicket,
   updateTicketStatus,
 } from "@/lib/queue-db";
-import { Bell, CheckCircle2, Copy, QrCode, RefreshCcw, Sparkles, Ticket as TicketIcon, Users } from "lucide-react";
+import { Bell, CheckCircle2, Copy, Database, RefreshCcw, Sparkles, Ticket as TicketIcon, Users } from "lucide-react";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -44,6 +44,8 @@ const Dashboard = () => {
   );
 
   const loadDashboard = async () => {
+    if (!isSupabaseConfigured) return;
+
     const [businessData, queuesData, ticketsData] = await Promise.all([
       fetchBusiness(businessId),
       fetchQueues(businessId),
@@ -60,6 +62,8 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
     const channel = supabase
       .channel(`dashboard-${businessId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tickets", filter: `business_id=eq.${businessId}` }, loadDashboard)
@@ -99,6 +103,24 @@ const Dashboard = () => {
     toast.success(`تم إنهاء ${ticket.code}`);
     loadDashboard();
   };
+
+  if (!isSupabaseConfigured) {
+    return (
+      <div dir="rtl" className="flex min-h-screen items-center justify-center bg-[#f4f9ff] p-4">
+        <Card className="w-full max-w-xl rounded-[2rem] border-0 bg-white/95 text-center shadow-[0_24px_80px_rgba(2,132,199,0.16)]">
+          <CardHeader>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-cyan-100 text-cyan-700">
+              <Database className="h-7 w-7" />
+            </div>
+            <CardTitle className="text-3xl font-black text-slate-950">Supabase غير متصل بعد</CardTitle>
+            <CardDescription className="text-base">
+              أضف متغيرات VITE_SUPABASE_URL و VITE_SUPABASE_ANON_KEY من إعدادات التكامل، ثم أعد تشغيل المعاينة.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
 
   if (!business) {
     return (

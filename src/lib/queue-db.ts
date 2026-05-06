@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, requireSupabaseConfig } from "@/integrations/supabase/client";
 
 export type QueueStatus = "waiting" | "called" | "done" | "skipped";
 
@@ -92,6 +92,8 @@ export const getQrImageUrl = (url: string) =>
   `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=14&data=${encodeURIComponent(url)}`;
 
 export const fetchBusiness = async (businessId: string) => {
+  requireSupabaseConfig();
+
   const { data, error } = await supabase
     .from("businesses")
     .select("*")
@@ -103,6 +105,8 @@ export const fetchBusiness = async (businessId: string) => {
 };
 
 export const fetchQueues = async (businessId: string) => {
+  requireSupabaseConfig();
+
   const { data, error } = await supabase
     .from("queues")
     .select("*")
@@ -114,6 +118,8 @@ export const fetchQueues = async (businessId: string) => {
 };
 
 export const fetchTickets = async (businessId: string) => {
+  requireSupabaseConfig();
+
   const { data, error } = await supabase
     .from("tickets")
     .select("*")
@@ -125,6 +131,8 @@ export const fetchTickets = async (businessId: string) => {
 };
 
 export const seedDemoShop = async () => {
+  requireSupabaseConfig();
+
   const { error: businessError } = await supabase.from("businesses").upsert(demoBusiness);
   if (businessError) throw businessError;
 
@@ -138,6 +146,8 @@ export const joinQueue = async (
   customerName: string,
   phone: string,
 ) => {
+  requireSupabaseConfig();
+
   const number = Math.max(queue.next_number, queue.current_number + 1);
   const ticket = {
     business_id: business.id,
@@ -162,6 +172,8 @@ export const joinQueue = async (
 };
 
 export const callNextTicket = async (queue: BusinessQueue, tickets: Ticket[]) => {
+  requireSupabaseConfig();
+
   const nextTicket = tickets
     .filter((ticket) => ticket.queue_id === queue.id && ticket.status === "waiting")
     .sort((a, b) => a.number - b.number)[0];
@@ -195,11 +207,15 @@ export const callNextTicket = async (queue: BusinessQueue, tickets: Ticket[]) =>
 };
 
 export const updateTicketStatus = async (ticketId: string, status: QueueStatus) => {
+  requireSupabaseConfig();
+
   const { error } = await supabase.from("tickets").update({ status }).eq("id", ticketId);
   if (error) throw error;
 };
 
 export const skipNextTicket = async (queue: BusinessQueue, tickets: Ticket[]) => {
+  requireSupabaseConfig();
+
   const nextTicket = tickets
     .filter((ticket) => ticket.queue_id === queue.id && ticket.status === "waiting")
     .sort((a, b) => a.number - b.number)[0];
