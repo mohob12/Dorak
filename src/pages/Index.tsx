@@ -1,133 +1,167 @@
-import { ArrowRight, CheckCircle2, Sparkles, Wand2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Link } from "react-router-dom";
+import {
+  ArrowLeft,
+  BriefcaseBusiness,
+  CheckCircle2,
+  LayoutDashboard,
+  QrCode,
+  Smartphone,
+} from "lucide-react";
 import { MadeWithDyad } from "@/components/made-with-dyad";
-
-const highlights = [
-  "واجهة متجاوبة من البداية",
-  "مبنية بـ React و Tailwind",
-  "جاهزة لتطوير المزايا القادمة",
-];
-
-const features = [
-  {
-    icon: Sparkles,
-    title: "تصميم أنيق",
-    description: "ألوان واضحة، مساحات مريحة، ولمسات حديثة تجعل الواجهة تبدو احترافية.",
-  },
-  {
-    icon: Wand2,
-    title: "مكونات منظمة",
-    description: "اعتماد على مكونات قابلة لإعادة الاستخدام مع بنية بسيطة وسهلة التوسّع.",
-  },
-  {
-    icon: CheckCircle2,
-    title: "جاهزية للتطوير",
-    description: "هيكل نظيف يساعدك على إضافة صفحات ومزايا جديدة بدون تعقيد.",
-  },
-];
+import { DEFAULT_SHOP_ID } from "@/lib/queue";
+import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
 
 const Index = () => {
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-900">
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.12),_transparent_35%),radial-gradient(circle_at_top_right,_rgba(168,85,247,0.12),_transparent_28%)]" />
-        <div className="relative mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center px-4 py-16 sm:px-6 lg:px-8">
-          <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-8 text-center lg:text-left">
-              <Badge className="rounded-full bg-blue-100 px-4 py-1 text-blue-700 hover:bg-blue-100">
-                Ready to build
-              </Badge>
+    <main
+      dir="rtl"
+      className="min-h-screen bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6"
+    >
+      <div className="mx-auto max-w-5xl">
+        <nav className="mb-8 flex items-center justify-between rounded-full border border-teal-100 bg-white/85 px-4 py-3 shadow-sm shadow-teal-900/5">
+          <div className="text-xl font-black text-teal-800">Dorak | دورك</div>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/auth?plan=trial"
+              className="hidden rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-400 sm:inline-flex"
+            >
+              تسجيل صاحب عمل
+            </Link>
+            <Link
+              to="/dashboard"
+              className="rounded-full bg-teal-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-teal-800"
+            >
+              لوحة التحكم
+            </Link>
+          </div>
+        </nav>
 
-              <div className="space-y-4">
-                <h1 className="max-w-2xl text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
-                  بداية نظيفة وجذابة لمشروعك القادم
-                </h1>
-                <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
-                  هذه الواجهة الأساسية مصممة لتكون جميلة وواضحة ومتجاوبة، مع
-                  بنية مريحة تساعدك على تطوير التطبيق بسرعة.
-                </p>
-              </div>
+        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div className="rounded-[2.4rem] bg-teal-700 p-7 text-white shadow-xl shadow-teal-900/15 sm:p-10">
+            <div className="mb-10 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-bold">
+              نظام طوابير رقمي بسيط للمتاجر
+            </div>
+            <h1 className="text-4xl font-black leading-tight sm:text-6xl">
+              خَلّي الزبون يحجز دوره من جواله
+            </h1>
+            <p className="mt-5 max-w-2xl text-base leading-8 text-teal-50/85">
+              Dorak يساعد المتاجر على إدارة الطابور بدون تعقيد: رابط QR للزبائن،
+              تذاكر رقمية، ولوحة تحكم خاصة لصاحب العمل تعرض الدور التالي فورياً.
+            </p>
 
-              <div className="flex flex-col items-center gap-3 sm:flex-row lg:justify-start">
-                <Button className="rounded-full px-6 py-6 text-base shadow-sm">
-                  ابدأ الآن
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-full px-6 py-6 text-base"
-                >
-                  استكشف البنية
-                </Button>
-              </div>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                to="/auth?plan=trial"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-4 font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
+              >
+                سجّل كصاحب عمل
+                <BriefcaseBusiness className="h-5 w-5" />
+              </Link>
+              <Link
+                to="/dashboard"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/12 px-6 py-4 font-black text-white ring-1 ring-white/20 transition hover:bg-white/18"
+              >
+                الدخول للوحة التحكم
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <Link
+                to={`/shop/${DEFAULT_SHOP_ID}`}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/12 px-6 py-4 font-black text-white ring-1 ring-white/20 transition hover:bg-white/18"
+              >
+                تجربة صفحة الزبون
+              </Link>
+            </div>
+          </div>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                {highlights.map((item) => (
-                  <div
-                    key={item}
-                    className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm text-slate-600 shadow-sm"
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
+          <div className="grid gap-4">
+            <div className="rounded-[2rem] border border-teal-100 bg-white p-6 shadow-sm shadow-teal-900/5">
+              <Smartphone className="mb-5 h-8 w-8 text-teal-700" />
+              <h2 className="text-xl font-black">صفحة زبون سهلة</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-500">
+                زر واحد لحجز الدور، مع رقم التذكرة وعدد المنتظرين والوقت المتوقع.
+              </p>
             </div>
 
-            <Card className="overflow-hidden rounded-3xl border-slate-200 bg-white/90 shadow-xl backdrop-blur">
-              <CardContent className="space-y-6 p-6 sm:p-8">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-blue-600">لوحة سريعة</p>
-                  <h2 className="text-2xl font-semibold text-slate-950">
-                    كل ما تحتاجه للبدء
-                  </h2>
-                </div>
+            <div className="rounded-[2rem] border border-amber-100 bg-amber-50 p-6 shadow-sm">
+              <LayoutDashboard className="mb-5 h-8 w-8 text-amber-700" />
+              <h2 className="text-xl font-black">لوحة تحكم خاصة</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-600">
+                أصحاب العمل يسجلون حساباً خاصاً ثم يديرون متجرهم ورمز QR من لوحة
+                محمية.
+              </p>
+            </div>
 
-                <div className="grid gap-4">
-                  {features.map((feature) => {
-                    const Icon = feature.icon;
-                    return (
-                      <div
-                        key={feature.title}
-                        className="flex gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                      >
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="space-y-1 text-left">
-                          <h3 className="font-semibold text-slate-900">
-                            {feature.title}
-                          </h3>
-                          <p className="text-sm leading-6 text-slate-600">
-                            {feature.description}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="rounded-2xl bg-slate-900 p-5 text-white">
-                  <p className="text-sm text-slate-300">الحالة الحالية</p>
-                  <div className="mt-3 flex items-end justify-between">
-                    <div>
-                      <p className="text-3xl font-semibold">جاهز</p>
-                      <p className="mt-1 text-sm text-slate-300">
-                        الصفحة الرئيسية أصبحت فعّالة وواضحة.
-                      </p>
-                    </div>
-                    <div className="rounded-full bg-emerald-500/15 px-3 py-1 text-sm font-medium text-emerald-300">
-                      Live
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="rounded-[2rem] border border-teal-100 bg-white p-6 shadow-sm shadow-teal-900/5">
+              <QrCode className="mb-5 h-8 w-8 text-teal-700" />
+              <h2 className="text-xl font-black">QR لكل متجر</h2>
+              <p className="mt-2 text-sm leading-7 text-slate-500">
+                كل معرف متجر ينتج رابطاً ورمز QR خاصاً به للمشاركة أو الطباعة.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
+        <section className="mt-8 rounded-[2.4rem] border border-teal-100 bg-white/90 p-5 shadow-sm shadow-teal-900/5 sm:p-7">
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm font-black text-teal-700">باقات الاشتراك</p>
+              <h2 className="mt-1 text-3xl font-black">
+                اختر خطة بسيطة بسعر واضح
+              </h2>
+            </div>
+            <p className="text-sm font-bold text-slate-500">
+              التسعير بالدولار — مع تجربة مجانية 3 أيام
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            {SUBSCRIPTION_PLANS.map((plan) => (
+              <div
+                key={plan.id}
+                className={`rounded-[2rem] border p-6 ${
+                  plan.id === "monthly"
+                    ? "border-amber-200 bg-amber-50"
+                    : "border-teal-100 bg-teal-50"
+                }`}
+              >
+                <div className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-teal-800">
+                  {plan.badge}
+                </div>
+                <h3 className="text-2xl font-black">{plan.name}</h3>
+                <p className="mt-2 text-4xl font-black text-teal-800">
+                  {plan.price}
+                </p>
+                <p className="mt-3 text-sm leading-7 text-slate-600">
+                  {plan.description}
+                </p>
+
+                <ul className="mt-5 space-y-3">
+                  {plan.features.map((feature) => (
+                    <li
+                      key={feature}
+                      className="flex items-center gap-2 text-sm font-bold text-slate-700"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-teal-700" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  to={`/auth?plan=${plan.id}`}
+                  className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
+                    plan.id === "monthly"
+                      ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                      : "bg-teal-700 text-white hover:bg-teal-800"
+                  }`}
+                >
+                  ابدأ بهذه الباقة
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
       <MadeWithDyad />
     </main>
   );
