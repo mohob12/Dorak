@@ -23,6 +23,9 @@ type AuthAction = AuthMode | null;
 const isSubscriptionPlan = (value: string | null): value is SubscriptionPlanId =>
   value === "trial" || value === "monthly";
 
+const isAuthMode = (value: string | null): value is AuthMode =>
+  value === "sign_in" || value === "sign_up";
+
 export function BusinessAuth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -37,9 +40,17 @@ export function BusinessAuth() {
   const [accountPrepared, setAccountPrepared] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
+  const isPlanManagementRoute =
+    searchParams.get("mode") === "plans" || searchParams.has("plan");
+
   useEffect(() => {
     const planFromUrl = searchParams.get("plan");
+    const modeFromUrl = searchParams.get("mode");
     const storedPlan = window.localStorage.getItem(PLAN_STORAGE_KEY);
+
+    if (isAuthMode(modeFromUrl)) {
+      setMode(modeFromUrl);
+    }
 
     if (isSubscriptionPlan(planFromUrl)) {
       setSelectedPlan(planFromUrl);
@@ -54,6 +65,10 @@ export function BusinessAuth() {
 
   useEffect(() => {
     if (loading || !session?.user || isPreparingAccount || accountPrepared) {
+      return;
+    }
+
+    if (isPlanManagementRoute) {
       return;
     }
 
@@ -80,6 +95,7 @@ export function BusinessAuth() {
       .finally(() => setIsPreparingAccount(false));
   }, [
     accountPrepared,
+    isPlanManagementRoute,
     isPreparingAccount,
     lastAuthAction,
     loading,
@@ -91,6 +107,20 @@ export function BusinessAuth() {
   const selectPlan = (plan: SubscriptionPlanId) => {
     setSelectedPlan(plan);
     window.localStorage.setItem(PLAN_STORAGE_KEY, plan);
+  };
+
+  const updateCurrentPlan = async () => {
+    if (!session?.user) {
+      navigate(`/auth?mode=sign_up&plan=${selectedPlan}`);
+      return;
+    }
+
+    setIsPreparingAccount(true);
+    await ensureOwnerProfile(session.user.id, session.user.email, selectedPlan);
+    await updateOwnerPlan(session.user.id, selectedPlan);
+    toast.success("تم تحديث باقة لوحة التحكم");
+    setIsPreparingAccount(false);
+    navigate("/dashboard", { replace: true });
   };
 
   const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
@@ -147,6 +177,53 @@ export function BusinessAuth() {
     toast.success("تم تسجيل الدخول");
     setIsPreparingAccount(false);
   };
+
+  if (session?.user && isPlanManagementRoute) {
+    return (
+      <main
+        dir="rtl"
+        className="min-h-screen bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6"
+      >
+        <div className="mx-auto max-w-4xl">
+          <section className="rounded-[2.4rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15 sm:p-8">
+            <p className="text-sm text-teal-50/80">Dorak | دورك</p>
+            <h1 className="mt-2 text-3xl font-black leading-tight sm:text-5xl">
+              إدارة باقة لوحة التحكم
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-teal-50/85">
+              اختر الباقة التي تريد ربطها بحسابك الحالي، ثم ارجع مباشرة إلى لوحة
+              التحكم الخاصة بمتجرك.
+            </p>
+          </section>
+
+          <section className="mt-5 rounded-[2rem] border border-teal-100 bg-white/90 p-5 shadow-sm shadow-teal-900/5">
+            <SubscriptionPlans
+              selectedPlan={selectedPlan}
+              onSelectPlan={selectPlan}
+            />
+
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                type="button"
+                onClick={updateCurrentPlan}
+                disabled={isPreparingAccount}
+                className="inline-flex flex-1 items-center justify-center rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isPreparingAccount ? "جاري التحديث..." : "تحديث الباقة"}
+              </button>
+
+              <Link
+                to="/dashboard"
+                className="inline-flex flex-1 items-center justify-center rounded-3xl bg-teal-700 px-5 py-4 text-lg font-black text-white transition hover:bg-teal-800"
+              >
+                الرجوع للوحة التحكم
+              </Link>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main

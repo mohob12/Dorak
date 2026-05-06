@@ -72,7 +72,7 @@ export function DashboardQueue() {
     }
 
     if (!user) {
-      navigate("/auth", { replace: true });
+      navigate("/auth?mode=sign_in", { replace: true });
       return;
     }
 
@@ -147,7 +147,7 @@ export function DashboardQueue() {
   const logout = async () => {
     await signOut();
     toast.success("تم تسجيل الخروج");
-    navigate("/auth", { replace: true });
+    navigate("/auth?mode=sign_in", { replace: true });
   };
 
   const nextTicket = waitingTickets[0];
@@ -188,7 +188,7 @@ export function DashboardQueue() {
               </div>
               <div className="flex items-center gap-2">
                 <Link
-                  to="/auth"
+                  to={`/auth?mode=plans&plan=${profile?.subscription_plan || "trial"}`}
                   className="rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
                 >
                   الباقات
@@ -235,7 +235,7 @@ export function DashboardQueue() {
                 </p>
               </div>
               <Link
-                to="/auth"
+                to={`/auth?mode=plans&plan=${profile?.subscription_plan || "trial"}`}
                 className="rounded-2xl bg-amber-500 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-amber-400"
               >
                 تغيير الباقة
