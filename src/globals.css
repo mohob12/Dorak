@@ -1,4 +1,17 @@
-@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&display=swap");
+
+@font-face {
+  font-family: "TT Neoris Pro Trial";
+  src:
+    local("TT Neoris Pro Trial DemiBold"),
+    local("TT NEORIS PRO TRIAL DEMIBOLD"),
+    local("Tt Neoris Pro Trial DemiBold"),
+    local("TT Neoris Pro Trial"),
+    local("Tt Neoris Pro Trial");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -91,14 +104,26 @@
   }
 
   html {
-    font-family: "IBM Plex Sans Arabic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "TT Neoris Pro Trial", "Noto Sans Arabic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
 
   body {
     @apply bg-background text-foreground;
-    font-family: "IBM Plex Sans Arabic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: "TT Neoris Pro Trial", "Noto Sans Arabic", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 500;
     font-feature-settings: "kern";
     text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  strong,
+  b {
+    font-weight: 700;
   }
 
   button,
