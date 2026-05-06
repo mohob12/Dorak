@@ -3,15 +3,22 @@ import dyadComponentTagger from "@dyad-sh/react-vite-component-tagger";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 
-export default defineConfig(() => ({
-  server: {
-    host: "::",
-    port: 8080,
-  },
+export default defineConfig({
   plugins: [dyadComponentTagger(), react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+  server: {
+    host: "0.0.0.0",
+    port: 8080,
+  },
+  preview: {
+    host: "0.0.0.0",
+    port: 8080,
+  },
+  build: {
+    outDir: "dist",
+  },
+});
