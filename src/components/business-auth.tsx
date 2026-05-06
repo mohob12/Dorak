@@ -7,7 +7,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { SubscriptionPlans } from "@/components/subscription-plans";
 import { useSession } from "@/hooks/use-session";
@@ -18,12 +18,18 @@ import type { SubscriptionPlanId } from "@/lib/subscription-plans";
 const PLAN_STORAGE_KEY = "dorak-selected-owner-plan";
 
 type AuthMode = "sign_in" | "sign_up";
+type AuthAction = AuthMode | null;
+
+const isSubscriptionPlan = (value: string | null): value is SubscriptionPlanId =>
+  value === "trial" || value === "monthly";
 
 export function BusinessAuth() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { session, loading, authError } = useSession();
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanId>("trial");
   const [mode, setMode] = useState<AuthMode>("sign_up");
+  const [lastAuthAction, setLastAuthAction] = useState<AuthAction>(null);
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,22 +38,40 @@ export function BusinessAuth() {
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    const planFromUrl = searchParams.get("plan");
     const storedPlan = window.localStorage.getItem(PLAN_STORAGE_KEY);
 
-    if (storedPlan === "trial" || storedPlan === "monthly") {
+    if (isSubscriptionPlan(planFromUrl)) {
+      setSelectedPlan(planFromUrl);
+      window.localStorage.setItem(PLAN_STORAGE_KEY, planFromUrl);
+      return;
+    }
+
+    if (isSubscriptionPlan(storedPlan)) {
       setSelectedPlan(storedPlan);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
-    if (!session?.user || isPreparingAccount || accountPrepared) {
+    if (loading || !session?.user || isPreparingAccount || accountPrepared) {
+      return;
+    }
+
+    if (!lastAuthAction) {
+      navigate("/dashboard", { replace: true });
       return;
     }
 
     setIsPreparingAccount(true);
 
     ensureOwnerProfile(session.user.id, session.user.email, selectedPlan)
-      .then(() => updateOwnerPlan(session.user.id, selectedPlan))
+      .then((profile) => {
+        if (lastAuthAction === "sign_up") {
+          return updateOwnerPlan(session.user.id, selectedPlan);
+        }
+
+        return profile;
+      })
       .then(() => {
         setAccountPrepared(true);
         toast.success("تم تجهيز لوحة التحكم الخاصة بك");
@@ -57,6 +81,8 @@ export function BusinessAuth() {
   }, [
     accountPrepared,
     isPreparingAccount,
+    lastAuthAction,
+    loading,
     navigate,
     selectedPlan,
     session?.user,
@@ -70,6 +96,7 @@ export function BusinessAuth() {
   const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormMessage(null);
+    setLastAuthAction(mode);
     setIsPreparingAccount(true);
 
     if (mode === "sign_up") {
@@ -151,10 +178,17 @@ export function BusinessAuth() {
               <p className="font-black">حساب آمن وخاص</p>
             </div>
             <p className="mt-2 text-sm leading-7 text-teal-50/80">
-              كل صاحب عمل يدخل إلى لوحة متجره فقط، ولا تظهر لوحة إدارة التطبيق
-              العامة لأصحاب العمل.
+              كل صاحب عمل يدخل إلى لوحة متجره فقط، ولوحة إدارة التطبيق لها رابط
+              خاص وغير ظاهرة لأصحاب العمل.
             </p>
           </div>
+
+          <Link
+            to="/"
+            className="mt-6 inline-flex rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
+          >
+            العودة للصفحة الرئيسية
+          </Link>
         </section>
 
         <section className="space-y-5">
@@ -188,6 +222,7 @@ export function BusinessAuth() {
                 onClick={() => {
                   setMode(mode === "sign_up" ? "sign_in" : "sign_up");
                   setFormMessage(null);
+                  setLastAuthAction(null);
                 }}
                 className="rounded-2xl bg-teal-50 px-4 py-3 text-sm font-black text-teal-800 transition hover:bg-teal-100"
               >

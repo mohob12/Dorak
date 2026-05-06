@@ -22,7 +22,7 @@ const Index = () => {
           <div className="text-xl font-black text-teal-800">Dorak | دورك</div>
           <div className="flex items-center gap-2">
             <Link
-              to="/auth"
+              to="/auth?plan=trial"
               className="hidden rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-slate-950 transition hover:bg-amber-400 sm:inline-flex"
             >
               تسجيل صاحب عمل
@@ -51,7 +51,7 @@ const Index = () => {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                to="/auth"
+                to="/auth?plan=trial"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-amber-500 px-6 py-4 font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
               >
                 سجّل كصاحب عمل
@@ -148,7 +148,7 @@ const Index = () => {
                 </ul>
 
                 <Link
-                  to="/auth"
+                  to={`/auth?plan=${plan.id}`}
                   className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
                     plan.id === "monthly"
                       ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
