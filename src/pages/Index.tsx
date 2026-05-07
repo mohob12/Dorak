@@ -42,7 +42,7 @@ const Index = () => {
               نظام طوابير رقمي بسيط للمتاجر
             </div>
             <h1 className="text-4xl font-black leading-tight sm:text-6xl">
-              خَلّي الزبون يحجز دوره من جواله
+              رقمن طوابيرك ،وخلي الزبون يحجز دوره من جواله
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-teal-50/85">
               Dorak يساعد المتاجر على إدارة الطابور بدون تعقيد: رابط QR للزبائن،
