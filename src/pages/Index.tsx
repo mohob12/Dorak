@@ -137,7 +137,7 @@ const Index = () => {
                       : "bg-slate-100 text-slate-700"
                   }`}
                 >
-                  {plan.badge}
+                  premium
                 </div>
                 <h3 className="text-2xl font-black">{plan.name}</h3>
                 <p
