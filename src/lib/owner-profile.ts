@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { cleanShopId } from "@/lib/queue";
 import {
   getTrialEndsAt,
   type SubscriptionPlanId,
@@ -15,10 +16,13 @@ export type OwnerProfile = {
   updated_at: string;
 };
 
+const makeDefaultShopId = (userId: string) => `shop-${userId.slice(0, 8)}`;
+
 export async function ensureOwnerProfile(
   userId: string,
   email: string | undefined,
-  selectedPlan: SubscriptionPlanId = "trial"
+  selectedPlan: SubscriptionPlanId = "trial",
+  businessName?: string
 ) {
   const { data: existingProfile, error: selectError } = await supabase
     .from("profiles")
@@ -30,18 +34,34 @@ export async function ensureOwnerProfile(
     throw new Error(selectError.message);
   }
 
+  const profileBusinessName =
+    businessName?.trim() || email?.split("@")[0] || "متجري";
+
   if (existingProfile) {
-    return existingProfile as OwnerProfile;
+    const profile = existingProfile as OwnerProfile;
+    const { error: shopError } = await supabase.from("shops").upsert({
+      id: profile.shop_id,
+      name: profile.business_name || profileBusinessName,
+      avg_service_minutes: 4,
+      owner_id: userId,
+    });
+
+    if (shopError) {
+      throw new Error(shopError.message);
+    }
+
+    return profile;
   }
 
   const isMonthly = selectedPlan === "monthly";
+  const shopId = makeDefaultShopId(userId);
 
   const { data: newProfile, error: insertError } = await supabase
     .from("profiles")
     .insert({
       id: userId,
-      business_name: email?.split("@")[0] || "متجري",
-      shop_id: `shop-${userId.slice(0, 8)}`,
+      business_name: profileBusinessName,
+      shop_id: shopId,
       subscription_plan: selectedPlan,
       subscription_status: isMonthly ? "active" : "trialing",
       trial_ends_at: isMonthly ? null : getTrialEndsAt(),
@@ -51,6 +71,17 @@ export async function ensureOwnerProfile(
 
   if (insertError) {
     throw new Error(insertError.message);
+  }
+
+  const { error: shopError } = await supabase.from("shops").upsert({
+    id: shopId,
+    name: profileBusinessName,
+    avg_service_minutes: 4,
+    owner_id: userId,
+  });
+
+  if (shopError) {
+    throw new Error(shopError.message);
   }
 
   return newProfile as OwnerProfile;
@@ -82,10 +113,16 @@ export async function updateOwnerPlan(
 }
 
 export async function updateOwnerShopId(userId: string, shopId: string) {
+  const normalizedShopId = cleanShopId(shopId);
+
+  if (!normalizedShopId) {
+    throw new Error("معرف المتجر غير صحيح.");
+  }
+
   const { data, error } = await supabase
     .from("profiles")
     .update({
-      shop_id: shopId,
+      shop_id: normalizedShopId,
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId)

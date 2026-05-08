@@ -136,37 +136,17 @@ export async function getTicket(ticketId: string) {
 }
 
 export async function createTicket(shopId: string) {
-  const shop = await ensureShop(shopId);
+  const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
 
-  const { data: lastTicket, error: lastTicketError } = await supabase
-    .from("tickets")
-    .select("ticket_number")
-    .eq("shop_id", shop.id)
-    .order("ticket_number", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("book_ticket", {
+    p_shop_id: normalizedShopId,
+  });
 
-  if (lastTicketError) {
-    throw new Error(lastTicketError.message);
+  if (error || !data) {
+    throw new Error(error?.message || "تعذر حجز الدور، حاول مرة أخرى.");
   }
 
-  const nextTicketNumber = (lastTicket?.ticket_number || 0) + 1;
-
-  const { data: ticket, error: insertError } = await supabase
-    .from("tickets")
-    .insert({
-      shop_id: shop.id,
-      ticket_number: nextTicketNumber,
-      status: "waiting",
-    })
-    .select("*")
-    .single();
-
-  if (insertError) {
-    throw new Error(insertError.message);
-  }
-
-  return ticket as Ticket;
+  return data as Ticket;
 }
 
 export async function serveNextTicket(shopId: string) {

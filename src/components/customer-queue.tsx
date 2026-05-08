@@ -30,16 +30,20 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const storageKey = `dorak-ticket-${shopId}`;
 
   const loadQueue = async () => {
-    const loadedShop = await ensureShop(shopId);
-    const tickets = await getWaitingTickets(loadedShop.id);
-    const storedTicketId = window.localStorage.getItem(storageKey);
+    try {
+      const loadedShop = await ensureShop(shopId);
+      const tickets = await getWaitingTickets(loadedShop.id);
+      const storedTicketId = window.localStorage.getItem(storageKey);
 
-    setShop(loadedShop);
-    setWaitingTickets(tickets);
+      setShop(loadedShop);
+      setWaitingTickets(tickets);
 
-    if (storedTicketId) {
-      const ticket = await getTicket(storedTicketId);
-      setCurrentTicket(ticket);
+      if (storedTicketId) {
+        const ticket = await getTicket(storedTicketId);
+        setCurrentTicket(ticket);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر تحميل الطابور");
     }
   };
 
@@ -96,14 +100,20 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
   const bookTicket = async () => {
     setIsBooking(true);
-    const ticket = await createTicket(shopId);
 
-    window.localStorage.setItem(storageKey, ticket.id);
-    previousTicketStatus.current = ticket.status;
-    setCurrentTicket(ticket);
-    toast.success(`تم حجز دورك بنجاح: رقم ${ticket.ticket_number}`);
-    await loadQueue();
-    setIsBooking(false);
+    try {
+      const ticket = await createTicket(shopId);
+
+      window.localStorage.setItem(storageKey, ticket.id);
+      previousTicketStatus.current = ticket.status;
+      setCurrentTicket(ticket);
+      toast.success(`تم حجز دورك بنجاح: رقم ${ticket.ticket_number}`);
+      await loadQueue();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   const isServed = currentTicket?.status === "served";

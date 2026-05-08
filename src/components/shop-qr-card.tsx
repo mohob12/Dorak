@@ -14,8 +14,8 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
     shopUrl
   )}`;
 
-  const copyUrl = () => {
-    navigator.clipboard.writeText(shopUrl);
+  const copyUrl = async () => {
+    await navigator.clipboard.writeText(shopUrl);
     toast.success("تم نسخ رابط صفحة العميل");
   };
 

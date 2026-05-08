@@ -64,7 +64,12 @@ export function BusinessAuth() {
 
     setIsPreparingAccount(true);
 
-    ensureOwnerProfile(session.user.id, session.user.email, selectedPlan)
+    ensureOwnerProfile(
+      session.user.id,
+      session.user.email,
+      selectedPlan,
+      businessName
+    )
       .then((profile) => {
         if (lastAuthAction === "sign_up") {
           return updateOwnerPlan(session.user.id, selectedPlan);
@@ -77,9 +82,13 @@ export function BusinessAuth() {
         toast.success("تم تجهيز لوحة التحكم الخاصة بك");
         navigate("/dashboard", { replace: true });
       })
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : "تعذر تجهيز الحساب");
+      })
       .finally(() => setIsPreparingAccount(false));
   }, [
     accountPrepared,
+    businessName,
     isPreparingAccount,
     lastAuthAction,
     loading,
@@ -99,53 +108,73 @@ export function BusinessAuth() {
     setLastAuthAction(mode);
     setIsPreparingAccount(true);
 
-    if (mode === "sign_up") {
-      const { data, error } = await supabase.auth.signUp({
+    try {
+      if (mode === "sign_up") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              business_name: businessName || email.split("@")[0],
+              subscription_plan: selectedPlan,
+            },
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+          },
+        });
+
+        if (error) {
+          toast.error(error.message);
+          return;
+        }
+
+        if (!data.session) {
+          setFormMessage(
+            "تم إنشاء الحساب. إذا طُلب منك تأكيد البريد، افتح رسالة التأكيد ثم سجّل الدخول."
+          );
+          toast.success("تم إرسال طلب إنشاء الحساب");
+          setMode("sign_in");
+          return;
+        }
+
+        await ensureOwnerProfile(
+          data.session.user.id,
+          data.session.user.email,
+          selectedPlan,
+          businessName
+        );
+        await updateOwnerPlan(data.session.user.id, selectedPlan);
+        setAccountPrepared(true);
+        toast.success("تم إنشاء الحساب وتجهيز لوحة التحكم");
+        navigate("/dashboard", { replace: true });
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            business_name: businessName || email.split("@")[0],
-            subscription_plan: selectedPlan,
-          },
-          emailRedirectTo: `${window.location.origin}/dashboard`,
-        },
       });
 
       if (error) {
         toast.error(error.message);
-        setIsPreparingAccount(false);
         return;
       }
 
-      if (!data.session) {
-        setFormMessage(
-          "تم إنشاء الحساب. إذا طُلب منك تأكيد البريد، افتح رسالة التأكيد ثم سجّل الدخول."
+      if (data.session?.user) {
+        await ensureOwnerProfile(
+          data.session.user.id,
+          data.session.user.email,
+          selectedPlan,
+          businessName
         );
-        toast.success("تم إرسال طلب إنشاء الحساب");
-        setMode("sign_in");
-        setIsPreparingAccount(false);
-        return;
       }
 
-      toast.success("تم إنشاء الحساب بنجاح");
+      toast.success("تم تسجيل الدخول");
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "تعذر إتمام العملية");
+    } finally {
       setIsPreparingAccount(false);
-      return;
     }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      toast.error(error.message);
-      setIsPreparingAccount(false);
-      return;
-    }
-
-    toast.success("تم تسجيل الدخول");
-    setIsPreparingAccount(false);
   };
 
   return (

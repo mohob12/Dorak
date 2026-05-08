@@ -23,9 +23,12 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/shop/:id" element={<ShopQueue />} />
+            <Route path="/queue/:id" element={<ShopQueue />} />
             <Route path="/admin-dorak-control-067" element={<AdminControl />} />
+            <Route path="/dorak-admin-067" element={<AdminControl />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
