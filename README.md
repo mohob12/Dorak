@@ -6,9 +6,12 @@ Dorak is a React/Vite queue-management web app.
 
 Use these settings on a static hosting provider such as Vercel, Netlify, or similar:
 
+- Framework preset: Vite
+- Install command: `npm install`
 - Build command: `npm run build`
 - Output directory: `dist`
-- Install command: `npm install`
+
+The project uses `package-lock.json` and npm for deployment.
 
 ## Environment variables
 
