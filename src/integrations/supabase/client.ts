@@ -7,9 +7,7 @@ const SUPABASE_PUBLISHABLE_KEY =
 
 export const isSupabaseConfigured = true;
 
-export const requireSupabaseConfig = () => {
-  return true;
-};
+export const requireSupabaseConfig = () => true;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
