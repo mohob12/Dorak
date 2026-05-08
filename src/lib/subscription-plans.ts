@@ -12,9 +12,9 @@ export type SubscriptionPlan = {
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "trial",
-    name: "تجربة مجانية",
+    name: "تجربة مجانية ( 3 ايام )",
     price: "$0",
-    badge: "3 أيام مجاناً",
+    badge: "Free",
     description: "ابدأ فوراً واختبر لوحة التحكم الخاصة بمتجرك بدون دفع.",
     features: [
       "لوحة تحكم خاصة",
@@ -27,7 +27,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "monthly",
     name: "الباقة الشهرية",
     price: "$9 / شهر",
-    badge: "سعر مدروس",
+    badge: "premium",
     description: "باقة مناسبة للمتاجر التي تريد إدارة الطابور يومياً بسهولة.",
     features: [
       "استخدام مستمر بدون حد تجريبي",
