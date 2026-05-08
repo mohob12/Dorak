@@ -3,18 +3,15 @@ import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = "https://exqgcaewajeadaivzifm.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
-
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInR5cCI6IkpXVCJ9";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4cWdjYWV3YWplYWRhaXZ6aWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxODExMzIsImV4cCI6MjA5Mzc1NzEzMn0._kMc-GTSAb1xfSlGLBzNazsuppG1XHGQn_NJt2CorYo";
 
 export const isSupabaseConfigured = true;
 
 export const requireSupabaseConfig = () => true;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+export const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storageKey: "dorak-exqgcaewajeadaivzifm-auth",
+    storageKey: "dorak-exqgcaewajeadaivzifm-auth-v2",
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
