@@ -192,31 +192,22 @@ const Shop = () => {
 
     setIsBooking(true);
 
-    const nextNumber =
-      tickets.length > 0
-        ? Math.max(...tickets.map((ticket) => ticket.ticket_number)) + 1
-        : 1;
-
-    const { data, error } = await supabase
-      .from("tickets")
-      .insert({
-        shop_id: id,
-        ticket_number: nextNumber,
-        status: "waiting",
-      })
-      .select("id,ticket_number,status,created_at")
-      .single();
+    const { data, error } = await supabase.rpc("book_ticket", {
+      p_shop_id: id,
+    });
 
     setIsBooking(false);
 
-    if (error) {
+    if (error || !data) {
       showError("تعذر حجز الدور، حاول مرة أخرى");
       return;
     }
 
-    localStorage.setItem(`dorak-ticket-${id}`, data.id);
-    setMyTicketId(data.id);
-    showSuccess(`تم حجز دورك رقم ${data.ticket_number}`);
+    const bookedTicket = data as TicketRow;
+
+    localStorage.setItem(`dorak-ticket-${id}`, bookedTicket.id);
+    setMyTicketId(bookedTicket.id);
+    showSuccess(`تم حجز دورك رقم ${bookedTicket.ticket_number}`);
     await fetchTickets();
   };
 
