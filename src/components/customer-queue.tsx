@@ -1,7 +1,7 @@
 "use client";
 
-import { Clock, Sparkles, TicketCheck, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Bell, Clock, Sparkles, TicketCheck, UsersRound } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TurnAlert } from "@/components/turn-alert";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,11 +25,12 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [waitingTickets, setWaitingTickets] = useState<Ticket[]>([]);
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
   const [isBooking, setIsBooking] = useState(false);
+  const [showTurnAlert, setShowTurnAlert] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
 
   const storageKey = `dorak-ticket-${shopId}`;
 
-  const loadQueue = async () => {
+  const loadQueue = useCallback(async () => {
     try {
       const loadedShop = await ensureShop(shopId);
       const tickets = await getWaitingTickets(loadedShop.id);
@@ -45,7 +46,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر تحميل الطابور");
     }
-  };
+  }, [shopId, storageKey]);
 
   useEffect(() => {
     loadQueue();
@@ -66,17 +67,25 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       )
       .subscribe();
 
+    const refreshTimer = window.setInterval(() => {
+      loadQueue();
+    }, 12000);
+
     return () => {
+      window.clearInterval(refreshTimer);
       supabase.removeChannel(channel);
     };
-  }, [shopId]);
+  }, [loadQueue, shopId]);
 
   useEffect(() => {
     if (
       currentTicket?.status === "served" &&
       previousTicketStatus.current === "waiting"
     ) {
-      toast.success("حان دورك الآن! توجه إلى مكان الخدمة");
+      setShowTurnAlert(true);
+      toast.success("حان دورك الآن! توجه إلى مكان الخدمة", {
+        duration: 9000,
+      });
     }
 
     previousTicketStatus.current = currentTicket?.status || null;
@@ -144,8 +153,24 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
           </p>
         </header>
 
-        {isServed && currentTicket ? (
+        {showTurnAlert && isServed && currentTicket ? (
           <TurnAlert ticketNumber={currentTicket.ticket_number} />
+        ) : null}
+
+        {currentTicket && !isServed ? (
+          <div className="rounded-[1.7rem] border border-teal-100 bg-white px-5 py-4 shadow-sm shadow-teal-900/5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-100 text-teal-800">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-black text-slate-950">التحديث مباشر</p>
+                <p className="text-sm text-slate-500">
+                  عند استدعاء دورك ستظهر شاشة تنبيه مع صوت واهتزاز.
+                </p>
+              </div>
+            </div>
+          </div>
         ) : null}
 
         <section className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm shadow-teal-900/5">
