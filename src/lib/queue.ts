@@ -20,16 +20,6 @@ export type Ticket = {
   served_at: string | null;
 };
 
-type RpcBookedTicket = {
-  id: string;
-  shop_id: string;
-  ticket_number: number | null;
-  customer_name?: string | null;
-  status: TicketStatus;
-  created_at?: string;
-  served_at?: string | null;
-};
-
 export const DEFAULT_SHOP_ID = "dorak-demo";
 export const DEFAULT_AVG_SERVICE_MINUTES = 4;
 
@@ -146,42 +136,50 @@ export async function getTicket(ticketId: string) {
   return data as Ticket | null;
 }
 
+async function getNextTicketNumber(shopId: string) {
+  const { data, error } = await supabase
+    .from("tickets")
+    .select("ticket_number")
+    .eq("shop_id", shopId)
+    .order("ticket_number", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const latestTicketNumber = data?.[0]?.ticket_number || 0;
+
+  return latestTicketNumber + 1;
+}
+
 export async function createTicket(shopId: string, customerName: string) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
+  const trimmedCustomerName = customerName.trim();
 
-  const { data: rpcData, error: bookError } = await supabase
-    .rpc("book_ticket", {
-      p_shop_id: normalizedShopId,
-    })
-    .select("*");
-
-  if (bookError) {
-    throw new Error(bookError.message || "تعذر حجز الدور، حاول مرة أخرى.");
+  if (!trimmedCustomerName) {
+    throw new Error("يرجى إدخال الاسم أولاً");
   }
 
-  const bookedTicket = (Array.isArray(rpcData) ? rpcData[0] : null) as
-    | RpcBookedTicket
-    | null;
+  await ensureShop(normalizedShopId);
 
-  if (!bookedTicket?.id) {
-    throw new Error("تعذر إنشاء التذكرة الجديدة.");
-  }
+  const nextTicketNumber = await getNextTicketNumber(normalizedShopId);
 
-  const { data: updatedTickets, error: updateError } = await supabase
+  const { data: insertedTickets, error: insertError } = await supabase
     .from("tickets")
-    .update({
-      customer_name: customerName.trim(),
+    .insert({
+      shop_id: normalizedShopId,
+      ticket_number: nextTicketNumber,
+      customer_name: trimmedCustomerName,
+      status: "waiting",
     })
-    .eq("id", bookedTicket.id)
     .select("*");
 
-  if (updateError || !updatedTickets?.length) {
-    throw new Error(
-      updateError?.message || "تم إنشاء التذكرة لكن تعذر حفظ الاسم."
-    );
+  if (insertError || !insertedTickets?.length) {
+    throw new Error(insertError?.message || "تعذر حجز الدور، حاول مرة أخرى.");
   }
 
-  return updatedTickets[0] as Ticket;
+  return insertedTickets[0] as Ticket;
 }
 
 export async function serveNextTicket(shopId: string) {
