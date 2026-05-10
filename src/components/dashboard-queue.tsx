@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  Home,
   LogOut,
   Sparkles,
   Store,
@@ -54,7 +55,7 @@ export function DashboardQueue() {
     );
   }, [profile?.subscription_plan]);
 
-  const plansPageLink = "/auth";
+  const plansPageLink = "/";
   const upgradePlanLabel =
     profile?.subscription_plan === "trial" ? "الترقية الآن" : "عرض الباقات";
 
@@ -264,7 +265,14 @@ export function DashboardQueue() {
                   الحساب: {user?.email}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <Link
+                  to="/"
+                  className="inline-flex items-center gap-2 rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
+                >
+                  <Home className="h-4 w-4" />
+                  الصفحة الرئيسية
+                </Link>
                 <Link
                   to={plansPageLink}
                   className="rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
