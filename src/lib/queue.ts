@@ -13,7 +13,7 @@ export type Shop = {
 export type Ticket = {
   id: string;
   shop_id: string;
-  ticket_number: number;
+  ticket_number: number | null;
   customer_name: string | null;
   status: TicketStatus;
   created_at: string;
@@ -139,18 +139,28 @@ export async function getTicket(ticketId: string) {
 export async function createTicket(shopId: string, customerName: string) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
 
+  const { data: bookedTicket, error: bookError } = await supabase.rpc(
+    "book_ticket",
+    {
+      p_shop_id: normalizedShopId,
+    }
+  );
+
+  if (bookError || !bookedTicket) {
+    throw new Error(bookError?.message || "تعذر حجز الدور، حاول مرة أخرى.");
+  }
+
   const { data, error } = await supabase
     .from("tickets")
-    .insert({
-      shop_id: normalizedShopId,
+    .update({
       customer_name: customerName.trim(),
-      status: "waiting",
     })
+    .eq("id", bookedTicket.id)
     .select("*")
     .single();
 
   if (error || !data) {
-    throw new Error(error?.message || "تعذر حجز الدور، حاول مرة أخرى.");
+    throw new Error(error?.message || "تم إنشاء التذكرة لكن تعذر حفظ الاسم.");
   }
 
   return data as Ticket;

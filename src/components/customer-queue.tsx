@@ -129,6 +129,8 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     ticketPosition * (shop?.avg_service_minutes || 4)
   );
 
+  const displayTicketNumber = currentTicket?.ticket_number ?? "—";
+
   const bookTicket = async () => {
     const trimmedName = customerName.trim();
 
@@ -147,7 +149,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       previousPosition.current = null;
       setCurrentTicket(ticket);
       setCustomerName("");
-      toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number}`);
+      toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number ?? "—"}`);
       await loadQueue();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
@@ -184,7 +186,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
           </p>
         </header>
 
-        {showTurnAlert && isServed && currentTicket ? (
+        {showTurnAlert && isServed && currentTicket?.ticket_number !== null ? (
           <TurnAlert ticketNumber={currentTicket.ticket_number} />
         ) : null}
 
@@ -250,7 +252,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
                   {isServed ? "حان دورك الآن" : "رقم تذكرتك"}
                 </p>
                 <p className="mt-2 text-6xl font-black tracking-tight">
-                  {currentTicket.ticket_number}
+                  {displayTicketNumber}
                 </p>
               </div>
 

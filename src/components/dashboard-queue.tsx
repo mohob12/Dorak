@@ -172,7 +172,7 @@ export function DashboardQueue() {
     const servedTicket = await serveNextTicket(activeShopId);
 
     if (servedTicket) {
-      toast.success(`تم تمرير التذكرة رقم ${servedTicket.ticket_number}`);
+      toast.success(`تم تمرير التذكرة رقم ${servedTicket.ticket_number ?? "—"}`);
     } else {
       toast.info("لا يوجد زبائن في الطابور حالياً");
     }
@@ -191,6 +191,7 @@ export function DashboardQueue() {
   };
 
   const nextTicket = waitingTickets[0];
+  const nextTicketNumber = nextTicket?.ticket_number ?? "—";
 
   if (loading || isPreparingDashboard) {
     return (
@@ -357,9 +358,7 @@ export function DashboardQueue() {
             <div className="rounded-[1.6rem] border border-amber-100 bg-amber-50 p-5 shadow-sm">
               <Ticket className="mb-4 h-6 w-6 text-amber-700" />
               <p className="text-sm font-bold text-slate-500">الدور الحالي</p>
-              <p className="mt-2 text-4xl font-black">
-                {nextTicket?.ticket_number || "—"}
-              </p>
+              <p className="mt-2 text-4xl font-black">{nextTicketNumber}</p>
             </div>
 
             <button
@@ -405,12 +404,12 @@ export function DashboardQueue() {
                             : "bg-white text-teal-700"
                         }`}
                       >
-                        {ticketItem.ticket_number}
+                        {ticketItem.ticket_number ?? "—"}
                       </div>
                       <div>
                         <p className="font-black">
                           {ticketItem.customer_name ||
-                            `تذكرة رقم ${ticketItem.ticket_number}`}
+                            `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
                         </p>
                         <p className="text-xs text-slate-500">
                           {index === 0 ? "الدور التالي" : `${index} قبله`}
