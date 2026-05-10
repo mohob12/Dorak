@@ -15,6 +15,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ShopQrCard } from "@/components/shop-qr-card";
+import { TicketPrintCard } from "@/components/ticket-print-card";
 import { useSession } from "@/hooks/use-session";
 import {
   ensureOwnerProfile,
@@ -402,32 +403,42 @@ export function DashboardQueue() {
                 {waitingTickets.map((ticketItem, index) => (
                   <div
                     key={ticketItem.id}
-                    className="flex items-center justify-between rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4"
+                    className="rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4"
                   >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`flex h-11 w-11 items-center justify-center rounded-2xl font-black ${
-                          index === 0
-                            ? "bg-amber-500 text-slate-950"
-                            : "bg-white text-teal-700"
-                        }`}
-                      >
-                        {ticketItem.ticket_number ?? "—"}
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`flex h-11 w-11 items-center justify-center rounded-2xl font-black ${
+                            index === 0
+                              ? "bg-amber-500 text-slate-950"
+                              : "bg-white text-teal-700"
+                          }`}
+                        >
+                          {ticketItem.ticket_number ?? "—"}
+                        </div>
+                        <div>
+                          <p className="font-black">
+                            {ticketItem.customer_name ||
+                              `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {index === 0 ? "الدور التالي" : `${index} قبله`}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-black">
-                          {ticketItem.customer_name ||
-                            `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                          {index === 0 ? "الدور التالي" : `${index} قبله`}
-                        </p>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <span className="inline-flex w-fit rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-800">
+                          ينتظر
+                        </span>
+                        <TicketPrintCard
+                          shopId={activeShopId}
+                          ticket={ticketItem}
+                          peopleAhead={index}
+                          avgServiceMinutes={shop?.avg_service_minutes || 4}
+                        />
                       </div>
                     </div>
-
-                    <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-800">
-                      ينتظر
-                    </span>
                   </div>
                 ))}
               </div>
