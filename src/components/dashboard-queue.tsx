@@ -54,6 +54,12 @@ export function DashboardQueue() {
     );
   }, [profile?.subscription_plan]);
 
+  const upgradePlanLink =
+    profile?.subscription_plan === "trial" ? "/auth?plan=monthly" : "/auth?plan=trial";
+
+  const upgradePlanLabel =
+    profile?.subscription_plan === "trial" ? "الترقية الآن" : "عرض الباقات";
+
   const trialDaysLeft = useMemo(() => {
     return getTrialDaysLeft(profile?.trial_ends_at || null);
   }, [profile?.trial_ends_at]);
@@ -260,10 +266,10 @@ export function DashboardQueue() {
               </div>
               <div className="flex items-center gap-2">
                 <Link
-                  to="/auth"
+                  to={upgradePlanLink}
                   className="rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
                 >
-                  الباقات
+                  {upgradePlanLabel}
                 </Link>
                 <button
                   type="button"
@@ -332,10 +338,10 @@ export function DashboardQueue() {
                 </p>
               </div>
               <Link
-                to="/auth"
+                to={upgradePlanLink}
                 className="rounded-2xl bg-amber-500 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-amber-400"
               >
-                تغيير الباقة
+                {upgradePlanLabel}
               </Link>
             </div>
           </section>
