@@ -7,7 +7,7 @@ type TurnAlertProps = {
   ticketNumber: number;
 };
 
-const playTurnSound = () => {
+const playTurnBurst = () => {
   const AudioContextClass =
     window.AudioContext ||
     (window as typeof window & {
@@ -15,7 +15,7 @@ const playTurnSound = () => {
     }).webkitAudioContext;
 
   if (!AudioContextClass) {
-    return undefined;
+    return;
   }
 
   const audioContext = new AudioContextClass();
@@ -49,25 +49,37 @@ const playTurnSound = () => {
     oscillator.stop(audioContext.currentTime + delay + 0.18);
   });
 
-  const closeTimer = window.setTimeout(() => {
+  window.setTimeout(() => {
     void audioContext.close();
   }, 1800);
-
-  return () => window.clearTimeout(closeTimer);
 };
 
 export function TurnAlert({ ticketNumber }: TurnAlertProps) {
   useEffect(() => {
-    navigator.vibrate?.([900, 180, 900, 180, 1100, 220, 700]);
-    const cleanupSound = playTurnSound();
+    const vibrationPattern = [500, 150, 500, 150, 700];
+    navigator.vibrate?.(vibrationPattern);
+
+    playTurnBurst();
+
+    const repeatTimer = window.setInterval(() => {
+      navigator.vibrate?.(vibrationPattern);
+      playTurnBurst();
+    }, 1600);
+
+    const stopTimer = window.setTimeout(() => {
+      window.clearInterval(repeatTimer);
+      navigator.vibrate?.(0);
+    }, 5000);
 
     return () => {
-      cleanupSound?.();
+      window.clearInterval(repeatTimer);
+      window.clearTimeout(stopTimer);
+      navigator.vibrate?.(0);
     };
   }, [ticketNumber]);
 
   return (
-    <section className="fixed inset-0 z-50 flex items-center justify-center bg-teal-950/75 px-4 py-8 backdrop-blur-sm animate-in fade-in duration-300">
+    <section className="fixed inset-0 z-50 flex animate-in fade-in items-center justify-center bg-teal-950/75 px-4 py-8 duration-300 backdrop-blur-sm">
       <div className="relative w-full max-w-md overflow-hidden rounded-[2.5rem] border-4 border-amber-300 bg-amber-400 p-6 text-center text-slate-950 shadow-2xl shadow-amber-500/40 animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
         <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-white/25" />
         <div className="absolute -bottom-12 -left-12 h-40 w-40 rounded-full bg-teal-700/20" />
@@ -86,17 +98,17 @@ export function TurnAlert({ ticketNumber }: TurnAlertProps) {
           تذكرة رقم {ticketNumber}
         </p>
         <p className="relative mt-4 text-base font-black leading-7 text-slate-900">
-          توجه الآن إلى مكان الخدمة. تم تشغيل صوت واهتزاز لتنبيهك.
+          توجه الآن إلى مكان الخدمة. سيتم تكرار الصوت والاهتزاز لمدة 5 ثوانٍ.
         </p>
 
         <div className="relative mt-5 grid grid-cols-2 gap-3">
           <div className="rounded-2xl bg-white/85 px-4 py-3 text-sm font-black text-teal-900">
             <Volume2 className="mx-auto mb-1 h-5 w-5" />
-            صوت تنبيه
+            صوت متكرر
           </div>
           <div className="rounded-2xl bg-white/85 px-4 py-3 text-sm font-black text-teal-900">
             <CheckCircle2 className="mx-auto mb-1 h-5 w-5" />
-            تحديث مباشر
+            تنبيه 5 ثوانٍ
           </div>
         </div>
       </div>
