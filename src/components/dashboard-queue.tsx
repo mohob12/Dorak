@@ -54,9 +54,7 @@ export function DashboardQueue() {
     );
   }, [profile?.subscription_plan]);
 
-  const upgradePlanLink =
-    profile?.subscription_plan === "trial" ? "/auth?plan=monthly" : "/auth?plan=trial";
-
+  const plansPageLink = "/auth";
   const upgradePlanLabel =
     profile?.subscription_plan === "trial" ? "الترقية الآن" : "عرض الباقات";
 
@@ -117,7 +115,8 @@ export function DashboardQueue() {
   useEffect(() => {
     if (trialEndingSoon) {
       toast("تنبيه الباقة التجريبية", {
-        description: "اقترب انتهاء 3 أيام المجانية. قم بالترقية إلى الباقة الشهرية للاستمرار.",
+        description:
+          "اقترب انتهاء 3 أيام المجانية. قم بالترقية إلى الباقة الشهرية للاستمرار.",
         duration: 9000,
       });
     }
@@ -161,7 +160,7 @@ export function DashboardQueue() {
     setShopIdInput(normalizedShopId);
     setActiveShopId(normalizedShopId);
     await loadQueue(normalizedShopId, user.id);
-    toast.success("تم تحديث معرف المتجر");
+    toast.success("تم تحديث القائمة");
   };
 
   const serveNext = async () => {
@@ -227,10 +226,10 @@ export function DashboardQueue() {
             </p>
             <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
-                to="/auth?plan=monthly"
+                to={plansPageLink}
                 className="inline-flex items-center justify-center rounded-2xl bg-amber-500 px-6 py-4 font-black text-slate-950 transition hover:bg-amber-400"
               >
-                الترقية للخطة الشهرية
+                عرض الباقات المتوفرة
               </Link>
               <button
                 type="button"
@@ -266,7 +265,7 @@ export function DashboardQueue() {
               </div>
               <div className="flex items-center gap-2">
                 <Link
-                  to={upgradePlanLink}
+                  to={plansPageLink}
                   className="rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
                 >
                   {upgradePlanLabel}
@@ -294,7 +293,7 @@ export function DashboardQueue() {
                 onClick={applyShopId}
                 className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-teal-800 transition hover:bg-teal-50"
               >
-                تحديث المتجر
+                تحديث القائمة
               </button>
             </div>
           </header>
@@ -310,11 +309,11 @@ export function DashboardQueue() {
                     تنبيه: المهلة المجانية قاربت على الانتهاء
                   </p>
                   <p className="mt-1 text-sm leading-7 text-amber-900/80">
-                    متبقّي تقريباً {trialDaysLeft} يوم. قم بالترقية إلى الخطة
-                    الشهرية حتى لا يتوقف حسابك.
+                    متبقّي تقريباً {trialDaysLeft} يوم. راجع الباقات المتوفرة
+                    للاستمرار دون توقف.
                   </p>
                   <Link
-                    to="/auth?plan=monthly"
+                    to={plansPageLink}
                     className="mt-3 inline-flex rounded-2xl bg-amber-500 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-400"
                   >
                     الترقية الآن
@@ -338,7 +337,7 @@ export function DashboardQueue() {
                 </p>
               </div>
               <Link
-                to={upgradePlanLink}
+                to={plansPageLink}
                 className="rounded-2xl bg-amber-500 px-5 py-3 text-center text-sm font-black text-slate-950 transition hover:bg-amber-400"
               >
                 {upgradePlanLabel}
@@ -410,7 +409,8 @@ export function DashboardQueue() {
                       </div>
                       <div>
                         <p className="font-black">
-                          {ticketItem.customer_name || `تذكرة رقم ${ticketItem.ticket_number}`}
+                          {ticketItem.customer_name ||
+                            `تذكرة رقم ${ticketItem.ticket_number}`}
                         </p>
                         <p className="text-xs text-slate-500">
                           {index === 0 ? "الدور التالي" : `${index} قبله`}
