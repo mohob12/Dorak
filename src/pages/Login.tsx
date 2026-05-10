@@ -1,28 +1,103 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
+import { AuthApiError } from "@supabase/supabase-js";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, LockKeyhole } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { showError, showSuccess } from "@/utils/toast";
+
+const getArabicAuthError = (message: string) => {
+  if (message.includes("Invalid login credentials")) {
+    return "بيانات الدخول غير صحيحة";
+  }
+
+  if (message.includes("User already registered")) {
+    return "هذا البريد الإلكتروني مسجل بالفعل";
+  }
+
+  if (message.includes("Email rate limit exceeded")) {
+    return "تم تجاوز عدد المحاولات المسموح، حاول لاحقًا";
+  }
+
+  if (message.includes("Password should be at least")) {
+    return "كلمة المرور يجب أن تكون أطول";
+  }
+
+  if (message.includes("Signup is disabled")) {
+    return "إنشاء الحسابات متوقف حاليًا من إعدادات Supabase";
+  }
+
+  return "حدثت مشكلة أثناء تسجيل الدخول أو إنشاء الحساب";
+};
 
 const Login = () => {
   const navigate = useNavigate();
+  const [authError, setAuthError] = useState("");
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
 
   useEffect(() => {
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
+        setAuthError("");
+        showSuccess("تم تسجيل الدخول بنجاح");
         navigate("/dashboard");
+      }
+
+      if (event === "SIGNED_OUT") {
+        setAuthError("");
       }
     });
 
-    supabase.auth.getSession().then(({ data: sessionData }) => {
+    supabase.auth.getSession().then(({ data: sessionData, error }) => {
+      if (error) {
+        setAuthError(getArabicAuthError(error.message));
+      }
+
       if (sessionData.session) {
         navigate("/dashboard");
+        return;
       }
+
+      setIsCheckingSession(false);
     });
 
     return () => data.subscription.unsubscribe();
   }, [navigate]);
+
+  useEffect(() => {
+    const handler = (event: PromiseRejectionEvent) => {
+      const reason = event.reason;
+
+      if (reason instanceof AuthApiError) {
+        const message = getArabicAuthError(reason.message);
+        setAuthError(message);
+        showError(message);
+      }
+    };
+
+    window.addEventListener("unhandledrejection", handler);
+
+    return () => {
+      window.removeEventListener("unhandledrejection", handler);
+    };
+  }, []);
+
+  if (isCheckingSession) {
+    return (
+      <main
+        dir="rtl"
+        className="min-h-screen bg-teal-50 px-4 py-8 text-slate-950"
+      >
+        <div className="mx-auto max-w-md">
+          <div className="rounded-[2rem] border border-teal-100 bg-white p-8 text-center shadow-xl shadow-teal-100/60">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-teal-100 border-t-teal-600" />
+            <p className="font-black text-slate-700">جاري فحص الجلسة...</p>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main
@@ -48,6 +123,12 @@ const Login = () => {
               أنشئ حسابك وابدأ تجربة Dorak المجانية لمدة 3 أيام.
             </p>
           </div>
+
+          {authError && (
+            <div className="mb-5 rounded-[1.5rem] border border-red-200 bg-red-50 p-4 text-center text-sm font-bold leading-7 text-red-700">
+              {authError}
+            </div>
+          )}
 
           <div className="auth-rtl">
             <Auth
@@ -79,6 +160,14 @@ const Login = () => {
                   label: {
                     fontWeight: "800",
                     color: "#334155",
+                  },
+                  anchor: {
+                    color: "#0f766e",
+                    fontWeight: "800",
+                  },
+                  message: {
+                    color: "#b91c1c",
+                    fontWeight: "700",
                   },
                 },
               }}

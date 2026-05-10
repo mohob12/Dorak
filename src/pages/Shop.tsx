@@ -182,7 +182,43 @@ const Shop = () => {
       const timeout = window.setTimeout(() => setNotice(false), 6000);
       return () => window.clearTimeout(timeout);
     }
-  }, [myTicket?.status, peopleBefore]);
+  }, [myTicket, peopleBefore, id]);
+
+  const bookTicketFallback = async () => {
+    if (!id) {
+      return null;
+    }
+
+    const { data: latestTicket, error: latestError } = await supabase
+      .from("tickets")
+      .select("ticket_number")
+      .eq("shop_id", id)
+      .order("ticket_number", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (latestError) {
+      return null;
+    }
+
+    const nextNumber = (latestTicket?.ticket_number ?? 0) + 1;
+
+    const { data, error } = await supabase
+      .from("tickets")
+      .insert({
+        shop_id: id,
+        ticket_number: nextNumber,
+        status: "waiting",
+      })
+      .select("id,ticket_number,status,created_at")
+      .single();
+
+    if (error) {
+      return null;
+    }
+
+    return data as TicketRow;
+  };
 
   const bookTicket = async () => {
     if (!id || !shop) {
@@ -196,14 +232,20 @@ const Shop = () => {
       p_shop_id: id,
     });
 
+    let bookedTicket: TicketRow | null = null;
+
+    if (!error && data) {
+      bookedTicket = data as TicketRow;
+    } else {
+      bookedTicket = await bookTicketFallback();
+    }
+
     setIsBooking(false);
 
-    if (error || !data) {
+    if (!bookedTicket) {
       showError("تعذر حجز الدور، حاول مرة أخرى");
       return;
     }
-
-    const bookedTicket = data as TicketRow;
 
     localStorage.setItem(`dorak-ticket-${id}`, bookedTicket.id);
     setMyTicketId(bookedTicket.id);
