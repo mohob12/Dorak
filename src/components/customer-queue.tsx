@@ -27,6 +27,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [isBooking, setIsBooking] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
+  const previousPosition = useRef<number | null>(null);
 
   const storageKey = `dorak-ticket-${shopId}`;
 
@@ -103,6 +104,26 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     return index >= 0 ? index : 0;
   }, [currentTicket, waitingTickets]);
 
+  useEffect(() => {
+    if (!currentTicket || currentTicket.status === "served") {
+      previousPosition.current = null;
+      return;
+    }
+
+    if (
+      previousPosition.current !== null &&
+      ticketPosition <= 1 &&
+      previousPosition.current > 1
+    ) {
+      toast("اقترب دورك", {
+        description: "بقي أمامك شخص واحد أو أقل، يرجى الاستعداد.",
+        duration: 7000,
+      });
+    }
+
+    previousPosition.current = ticketPosition;
+  }, [currentTicket, ticketPosition]);
+
   const estimatedWait = formatWaitTime(
     ticketPosition * (shop?.avg_service_minutes || 4)
   );
@@ -115,6 +136,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
       window.localStorage.setItem(storageKey, ticket.id);
       previousTicketStatus.current = ticket.status;
+      previousPosition.current = null;
       setCurrentTicket(ticket);
       toast.success(`تم حجز دورك بنجاح: رقم ${ticket.ticket_number}`);
       await loadQueue();
@@ -166,7 +188,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
               <div>
                 <p className="font-black text-slate-950">التحديث مباشر</p>
                 <p className="text-sm text-slate-500">
-                  عند استدعاء دورك ستظهر شاشة تنبيه مع صوت واهتزاز.
+                  سننبهك عندما يقترب دورك، ثم تظهر شاشة تنبيه كاملة عند حلول الدور.
                 </p>
               </div>
             </div>
@@ -235,7 +257,9 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
               <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-center text-sm leading-6 text-teal-800">
                 {isServed
                   ? "تفضل إلى الخدمة، شكراً لاستخدام Dorak."
-                  : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
+                  : ticketPosition <= 1
+                    ? "دورك قريب جداً، يرجى الاستعداد."
+                    : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
               </p>
             </div>
           )}

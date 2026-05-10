@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  AlertTriangle,
   ArrowLeft,
   CheckCircle2,
   LogOut,
@@ -28,7 +29,12 @@ import {
   type Shop,
   type Ticket as QueueTicket,
 } from "@/lib/queue";
-import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
+import {
+  SUBSCRIPTION_PLANS,
+  getTrialDaysLeft,
+  isTrialEndingSoon,
+  isTrialExpired,
+} from "@/lib/subscription-plans";
 import { supabase } from "@/integrations/supabase/client";
 
 export function DashboardQueue() {
@@ -49,14 +55,16 @@ export function DashboardQueue() {
   }, [profile?.subscription_plan]);
 
   const trialDaysLeft = useMemo(() => {
-    if (!profile?.trial_ends_at) {
-      return null;
-    }
-
-    const diff = new Date(profile.trial_ends_at).getTime() - Date.now();
-
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+    return getTrialDaysLeft(profile?.trial_ends_at || null);
   }, [profile?.trial_ends_at]);
+
+  const trialExpired =
+    profile?.subscription_plan === "trial" &&
+    isTrialExpired(profile?.trial_ends_at || null);
+
+  const trialEndingSoon =
+    profile?.subscription_plan === "trial" &&
+    isTrialEndingSoon(profile?.trial_ends_at || null);
 
   const loadQueue = async (shopId: string, ownerId: string) => {
     const loadedShop = await ensureShop(shopId, ownerId);
@@ -81,13 +89,36 @@ export function DashboardQueue() {
         setProfile(ownerProfile);
         setShopIdInput(ownerProfile.shop_id);
         setActiveShopId(ownerProfile.shop_id);
-        return loadQueue(ownerProfile.shop_id, user.id);
+
+        if (
+          ownerProfile.subscription_plan === "trial" &&
+          isTrialExpired(ownerProfile.trial_ends_at)
+        ) {
+          setIsPreparingDashboard(false);
+          return;
+        }
+
+        return loadQueue(ownerProfile.shop_id, user.id).then(() =>
+          setIsPreparingDashboard(false)
+        );
       })
-      .then(() => setIsPreparingDashboard(false));
+      .catch((error) => {
+        toast.error(error instanceof Error ? error.message : "تعذر فتح اللوحة");
+        setIsPreparingDashboard(false);
+      });
   }, [loading, navigate, user]);
 
   useEffect(() => {
-    if (!user || !activeShopId) {
+    if (trialEndingSoon) {
+      toast("تنبيه الباقة التجريبية", {
+        description: "اقترب انتهاء 3 أيام المجانية. قم بالترقية إلى الباقة الشهرية للاستمرار.",
+        duration: 9000,
+      });
+    }
+  }, [trialEndingSoon]);
+
+  useEffect(() => {
+    if (!user || !activeShopId || trialExpired) {
       return;
     }
 
@@ -110,10 +141,10 @@ export function DashboardQueue() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeShopId, user]);
+  }, [activeShopId, trialExpired, user]);
 
   const applyShopId = async () => {
-    if (!user) {
+    if (!user || trialExpired) {
       return;
     }
 
@@ -124,10 +155,14 @@ export function DashboardQueue() {
     setShopIdInput(normalizedShopId);
     setActiveShopId(normalizedShopId);
     await loadQueue(normalizedShopId, user.id);
-    toast.success("تم تحديث متجر لوحة التحكم الخاصة بك");
+    toast.success("تم تحديث معرف المتجر");
   };
 
   const serveNext = async () => {
+    if (trialExpired) {
+      return;
+    }
+
     setIsServing(true);
     const servedTicket = await serveNextTicket(activeShopId);
 
@@ -163,6 +198,43 @@ export function DashboardQueue() {
           <p className="mt-2 text-sm text-slate-500">
             سننقلك للوحة متجرك الخاصة خلال لحظات.
           </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (trialExpired) {
+    return (
+      <main
+        dir="rtl"
+        className="min-h-screen bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6"
+      >
+        <div className="mx-auto max-w-2xl">
+          <section className="rounded-[2.4rem] border border-amber-200 bg-white p-6 text-center shadow-sm">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-100 text-amber-700">
+              <AlertTriangle className="h-8 w-8" />
+            </div>
+            <h1 className="text-3xl font-black">انتهت المهلة المجانية</h1>
+            <p className="mt-3 text-sm leading-8 text-slate-600">
+              انتهت مدة التجربة المجانية الخاصة بحسابك. للمتابعة في استخدام
+              المنصة يجب الترقية إلى الخطة الشهرية المدفوعة.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Link
+                to="/auth?plan=monthly"
+                className="inline-flex items-center justify-center rounded-2xl bg-amber-500 px-6 py-4 font-black text-slate-950 transition hover:bg-amber-400"
+              >
+                الترقية للخطة الشهرية
+              </Link>
+              <button
+                type="button"
+                onClick={logout}
+                className="inline-flex items-center justify-center rounded-2xl bg-slate-100 px-6 py-4 font-black text-slate-800 transition hover:bg-slate-200"
+              >
+                تسجيل الخروج
+              </button>
+            </div>
+          </section>
         </div>
       </main>
     );
@@ -220,6 +292,31 @@ export function DashboardQueue() {
               </button>
             </div>
           </header>
+
+          {trialEndingSoon ? (
+            <section className="rounded-[1.7rem] border border-amber-200 bg-amber-50 p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-200 text-amber-800">
+                  <AlertTriangle className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-black text-amber-900">
+                    تنبيه: المهلة المجانية قاربت على الانتهاء
+                  </p>
+                  <p className="mt-1 text-sm leading-7 text-amber-900/80">
+                    متبقّي تقريباً {trialDaysLeft} يوم. قم بالترقية إلى الخطة
+                    الشهرية حتى لا يتوقف حسابك.
+                  </p>
+                  <Link
+                    to="/auth?plan=monthly"
+                    className="mt-3 inline-flex rounded-2xl bg-amber-500 px-4 py-3 text-sm font-black text-slate-950 transition hover:bg-amber-400"
+                  >
+                    الترقية الآن
+                  </Link>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="rounded-[1.7rem] border border-amber-100 bg-amber-50 p-5 shadow-sm">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -44,3 +44,33 @@ export function getTrialEndsAt() {
 
   return trialEndDate.toISOString();
 }
+
+export function getTrialDaysLeft(trialEndsAt: string | null) {
+  if (!trialEndsAt) {
+    return null;
+  }
+
+  const diff = new Date(trialEndsAt).getTime() - Date.now();
+
+  return Math.ceil(diff / (1000 * 60 * 60 * 24));
+}
+
+export function isTrialExpired(trialEndsAt: string | null) {
+  const daysLeft = getTrialDaysLeft(trialEndsAt);
+
+  if (daysLeft === null) {
+    return false;
+  }
+
+  return daysLeft < 0;
+}
+
+export function isTrialEndingSoon(trialEndsAt: string | null) {
+  const daysLeft = getTrialDaysLeft(trialEndsAt);
+
+  if (daysLeft === null) {
+    return false;
+  }
+
+  return daysLeft <= 1 && daysLeft >= 0;
+}

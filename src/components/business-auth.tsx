@@ -20,8 +20,21 @@ const PLAN_STORAGE_KEY = "dorak-selected-owner-plan";
 type AuthMode = "sign_in" | "sign_up";
 type AuthAction = AuthMode | null;
 
-const isSubscriptionPlan = (value: string | null): value is SubscriptionPlanId =>
-  value === "trial" || value === "monthly";
+const isSubscriptionPlan = (
+  value: string | null
+): value is SubscriptionPlanId => value === "trial" || value === "monthly";
+
+const getAuthMessage = (message: string) => {
+  if (message.includes("User already registered")) {
+    return "هذا البريد الإلكتروني مسجل بالفعل، لا يمكن إنشاء الحساب مرتين.";
+  }
+
+  if (message.includes("Invalid login credentials")) {
+    return "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+  }
+
+  return message;
+};
 
 export function BusinessAuth() {
   const navigate = useNavigate();
@@ -108,73 +121,90 @@ export function BusinessAuth() {
     setLastAuthAction(mode);
     setIsPreparingAccount(true);
 
-    try {
-      if (mode === "sign_up") {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              business_name: businessName || email.split("@")[0],
-              subscription_plan: selectedPlan,
-            },
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          },
-        });
-
-        if (error) {
-          toast.error(error.message);
-          return;
-        }
-
-        if (!data.session) {
-          setFormMessage(
-            "تم إنشاء الحساب. إذا طُلب منك تأكيد البريد، افتح رسالة التأكيد ثم سجّل الدخول."
-          );
-          toast.success("تم إرسال طلب إنشاء الحساب");
-          setMode("sign_in");
-          return;
-        }
-
-        await ensureOwnerProfile(
-          data.session.user.id,
-          data.session.user.email,
-          selectedPlan,
-          businessName
-        );
-        await updateOwnerPlan(data.session.user.id, selectedPlan);
-        setAccountPrepared(true);
-        toast.success("تم إنشاء الحساب وتجهيز لوحة التحكم");
-        navigate("/dashboard", { replace: true });
-        return;
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
+    if (mode === "sign_up") {
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            business_name: businessName || email.split("@")[0],
+            subscription_plan: selectedPlan,
+          },
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
       });
 
       if (error) {
-        toast.error(error.message);
+        toast.error(getAuthMessage(error.message));
+        setIsPreparingAccount(false);
         return;
       }
 
-      if (data.session?.user) {
-        await ensureOwnerProfile(
-          data.session.user.id,
-          data.session.user.email,
-          selectedPlan,
-          businessName
+      if (!data.session) {
+        setFormMessage(
+          "تم إنشاء الحساب. إذا طُلب منك تأكيد البريد، افتح رسالة التأكيد ثم سجّل الدخول."
         );
+        toast.success("تم إرسال طلب إنشاء الحساب");
+        setMode("sign_in");
+        setIsPreparingAccount(false);
+        return;
       }
 
-      toast.success("تم تسجيل الدخول");
-      navigate("/dashboard", { replace: true });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر إتمام العملية");
-    } finally {
-      setIsPreparingAccount(false);
+      ensureOwnerProfile(
+        data.session.user.id,
+        data.session.user.email,
+        selectedPlan,
+        businessName
+      )
+        .then(() => updateOwnerPlan(data.session.user.id, selectedPlan))
+        .then(() => {
+          setAccountPrepared(true);
+          toast.success("تم إنشاء الحساب وتجهيز لوحة التحكم");
+          navigate("/dashboard", { replace: true });
+        })
+        .catch((error) => {
+          toast.error(
+            error instanceof Error ? error.message : "تعذر إتمام العملية"
+          );
+        })
+        .finally(() => setIsPreparingAccount(false));
+
+      return;
     }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      toast.error(getAuthMessage(error.message));
+      setIsPreparingAccount(false);
+      return;
+    }
+
+    if (data.session?.user) {
+      ensureOwnerProfile(
+        data.session.user.id,
+        data.session.user.email,
+        selectedPlan,
+        businessName
+      )
+        .then(() => {
+          toast.success("تم تسجيل الدخول");
+          navigate("/dashboard", { replace: true });
+        })
+        .catch((error) => {
+          toast.error(
+            error instanceof Error ? error.message : "تعذر إتمام العملية"
+          );
+        })
+        .finally(() => setIsPreparingAccount(false));
+
+      return;
+    }
+
+    setIsPreparingAccount(false);
   };
 
   return (
@@ -207,8 +237,8 @@ export function BusinessAuth() {
               <p className="font-black">حساب آمن وخاص</p>
             </div>
             <p className="mt-2 text-sm leading-7 text-teal-50/80">
-              كل صاحب عمل يدخل إلى لوحة متجره فقط، ولوحة إدارة التطبيق لها رابط
-              خاص وغير ظاهرة لأصحاب العمل.
+              الخطة المجانية مدتها 3 أيام فقط، وقبل انتهائها سيظهر تنبيه داخل
+              لوحة التحكم للترقية إلى الباقة الشهرية.
             </p>
           </div>
 
@@ -270,6 +300,10 @@ export function BusinessAuth() {
                 {formMessage}
               </p>
             ) : null}
+
+            <p className="mb-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold leading-7 text-slate-700">
+              ملاحظة: لا يمكن إنشاء حسابين بنفس البريد الإلكتروني.
+            </p>
 
             {loading || isPreparingAccount ? (
               <div className="rounded-[1.5rem] bg-teal-50 px-5 py-8 text-center">
