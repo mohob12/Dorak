@@ -149,15 +149,17 @@ export async function getTicket(ticketId: string) {
 export async function createTicket(shopId: string, customerName: string) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
 
-  const { data: rpcData, error: bookError } = await supabase.rpc("book_ticket", {
-    p_shop_id: normalizedShopId,
-  });
+  const { data: rpcData, error: bookError } = await supabase
+    .rpc("book_ticket", {
+      p_shop_id: normalizedShopId,
+    })
+    .select("*");
 
   if (bookError) {
     throw new Error(bookError.message || "تعذر حجز الدور، حاول مرة أخرى.");
   }
 
-  const bookedTicket = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as
+  const bookedTicket = (Array.isArray(rpcData) ? rpcData[0] : null) as
     | RpcBookedTicket
     | null;
 
@@ -165,22 +167,21 @@ export async function createTicket(shopId: string, customerName: string) {
     throw new Error("تعذر إنشاء التذكرة الجديدة.");
   }
 
-  const { data: updatedTicket, error: updateError } = await supabase
+  const { data: updatedTickets, error: updateError } = await supabase
     .from("tickets")
     .update({
       customer_name: customerName.trim(),
     })
     .eq("id", bookedTicket.id)
-    .select("*")
-    .single();
+    .select("*");
 
-  if (updateError || !updatedTicket) {
+  if (updateError || !updatedTickets?.length) {
     throw new Error(
       updateError?.message || "تم إنشاء التذكرة لكن تعذر حفظ الاسم."
     );
   }
 
-  return updatedTicket as Ticket;
+  return updatedTickets[0] as Ticket;
 }
 
 export async function serveNextTicket(shopId: string) {
