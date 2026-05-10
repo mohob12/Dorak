@@ -146,36 +146,43 @@ export async function getTicket(ticketId: string) {
 export async function createTicket(shopId: string, customerName: string) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
 
-  const { data: rpcData, error: bookError } = await supabase.rpc("book_ticket", {
+  const { error: bookError } = await supabase.rpc("book_ticket", {
     p_shop_id: normalizedShopId,
   });
 
-  if (bookError || !rpcData) {
-    throw new Error(bookError?.message || "تعذر حجز الدور، حاول مرة أخرى.");
-  }
-
-  const bookedTicket = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as
-    | RpcBookedTicket
-    | undefined;
-
-  if (!bookedTicket?.id) {
-    throw new Error("تعذر إنشاء التذكرة الجديدة.");
+  if (bookError) {
+    throw new Error(bookError.message || "تعذر حجز الدور، حاول مرة أخرى.");
   }
 
   const { data, error } = await supabase
     .from("tickets")
+    .select("*")
+    .eq("shop_id", normalizedShopId)
+    .eq("status", "waiting")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    throw new Error(error?.message || "تم إنشاء التذكرة لكن تعذر تحميلها.");
+  }
+
+  const { data: updatedTicket, error: updateError } = await supabase
+    .from("tickets")
     .update({
       customer_name: customerName.trim(),
     })
-    .eq("id", bookedTicket.id)
+    .eq("id", data.id)
     .select("*")
     .single();
 
-  if (error || !data) {
-    throw new Error(error?.message || "تم إنشاء التذكرة لكن تعذر حفظ الاسم.");
+  if (updateError || !updatedTicket) {
+    throw new Error(
+      updateError?.message || "تم إنشاء التذكرة لكن تعذر حفظ الاسم."
+    );
   }
 
-  return data as Ticket;
+  return updatedTicket as Ticket;
 }
 
 export async function serveNextTicket(shopId: string) {
