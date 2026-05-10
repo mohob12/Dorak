@@ -20,6 +20,13 @@ export type Ticket = {
   served_at: string | null;
 };
 
+type RpcBookedTicket = {
+  id: string;
+  shop_id: string;
+  ticket_number: number | null;
+  status: TicketStatus;
+};
+
 export const DEFAULT_SHOP_ID = "dorak-demo";
 export const DEFAULT_AVG_SERVICE_MINUTES = 4;
 
@@ -139,15 +146,20 @@ export async function getTicket(ticketId: string) {
 export async function createTicket(shopId: string, customerName: string) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
 
-  const { data: bookedTicket, error: bookError } = await supabase.rpc(
-    "book_ticket",
-    {
-      p_shop_id: normalizedShopId,
-    }
-  );
+  const { data: rpcData, error: bookError } = await supabase.rpc("book_ticket", {
+    p_shop_id: normalizedShopId,
+  });
 
-  if (bookError || !bookedTicket) {
+  if (bookError || !rpcData) {
     throw new Error(bookError?.message || "تعذر حجز الدور، حاول مرة أخرى.");
+  }
+
+  const bookedTicket = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as
+    | RpcBookedTicket
+    | undefined;
+
+  if (!bookedTicket?.id) {
+    throw new Error("تعذر إنشاء التذكرة الجديدة.");
   }
 
   const { data, error } = await supabase
