@@ -410,7 +410,7 @@ export function DashboardQueue() {
                       </div>
                       <div>
                         <p className="font-black">
-                          تذكرة رقم {ticketItem.ticket_number}
+                          {ticketItem.customer_name || `تذكرة رقم ${ticketItem.ticket_number}`}
                         </p>
                         <p className="text-xs text-slate-500">
                           {index === 0 ? "الدور التالي" : `${index} قبله`}

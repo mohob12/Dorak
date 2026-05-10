@@ -14,6 +14,7 @@ export type Ticket = {
   id: string;
   shop_id: string;
   ticket_number: number;
+  customer_name: string | null;
   status: TicketStatus;
   created_at: string;
   served_at: string | null;
@@ -135,12 +136,18 @@ export async function getTicket(ticketId: string) {
   return data as Ticket | null;
 }
 
-export async function createTicket(shopId: string) {
+export async function createTicket(shopId: string, customerName: string) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
 
-  const { data, error } = await supabase.rpc("book_ticket", {
-    p_shop_id: normalizedShopId,
-  });
+  const { data, error } = await supabase
+    .from("tickets")
+    .insert({
+      shop_id: normalizedShopId,
+      customer_name: customerName.trim(),
+      status: "waiting",
+    })
+    .select("*")
+    .single();
 
   if (error || !data) {
     throw new Error(error?.message || "تعذر حجز الدور، حاول مرة أخرى.");

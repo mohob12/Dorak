@@ -140,7 +140,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     setIsBooking(true);
 
     try {
-      const ticket = await createTicket(shopId);
+      const ticket = await createTicket(shopId, trimmedName);
 
       window.localStorage.setItem(storageKey, ticket.id);
       previousTicketStatus.current = ticket.status;
