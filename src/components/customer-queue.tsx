@@ -24,6 +24,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [shop, setShop] = useState<Shop | null>(null);
   const [waitingTickets, setWaitingTickets] = useState<Ticket[]>([]);
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
+  const [customerName, setCustomerName] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
@@ -129,6 +130,13 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   );
 
   const bookTicket = async () => {
+    const trimmedName = customerName.trim();
+
+    if (!trimmedName) {
+      toast.error("يرجى إدخال الاسم أولاً");
+      return;
+    }
+
     setIsBooking(true);
 
     try {
@@ -138,7 +146,8 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       previousTicketStatus.current = ticket.status;
       previousPosition.current = null;
       setCurrentTicket(ticket);
-      toast.success(`تم حجز دورك بنجاح: رقم ${ticket.ticket_number}`);
+      setCustomerName("");
+      toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number}`);
       await loadQueue();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
@@ -203,8 +212,21 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
               </div>
               <h2 className="text-2xl font-black">جاهز تحجز دورك؟</h2>
               <p className="mx-auto mt-2 max-w-xs text-sm leading-7 text-slate-500">
-                سيتم إنشاء تذكرة جديدة لك في طابور هذا المتجر.
+                أدخل اسمك فقط وسيتم إنشاء تذكرة جديدة لك في طابور هذا المتجر.
               </p>
+
+              <div className="mt-5 text-right">
+                <label className="mb-2 block text-sm font-black text-slate-700">
+                  الاسم
+                </label>
+                <input
+                  type="text"
+                  value={customerName}
+                  onChange={(event) => setCustomerName(event.target.value)}
+                  placeholder="مثال: محمد"
+                  className="w-full rounded-2xl border border-teal-100 bg-slate-50 px-4 py-4 text-right font-bold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white"
+                />
+              </div>
 
               <button
                 type="button"
