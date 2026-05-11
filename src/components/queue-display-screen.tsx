@@ -193,7 +193,7 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
 
               <div className="rounded-[1.7rem] bg-white/12 p-5 ring-1 ring-white/15">
                 <Store className="mb-3 h-7 w-7 text-amber-300" />
-                <p className="text-sm text-teal-50/80">معرف المتجر</p>
+                <p className="text-sm text-teal-50/80">المعرف</p>
                 <p className="mt-2 text-2xl font-black">{shop?.id || shopId}</p>
               </div>
             </div>
