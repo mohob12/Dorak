@@ -68,7 +68,7 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
         <QrCode className="h-7 w-7" />
       </div>
 
-      <h2 className="text-xl font-black text-slate-950">رابط ورمز متجرك</h2>
+      <h2 className="text-xl font-black text-slate-950">QR حجز الأدوار</h2>
       <p className="mt-2 text-sm leading-6 text-slate-500">
         استخدم هذا الرابط مع الزبائن، ويمكنك تحميل رمز QR بصيغة صورة أو PDF.
       </p>
