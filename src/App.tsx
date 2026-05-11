@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
+import QueueDisplay from "./pages/QueueDisplay";
 import ShopQueue from "./pages/ShopQueue";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/shop/:id" element={<ShopQueue />} />
             <Route path="/queue/:id" element={<ShopQueue />} />
+            <Route path="/display/:id" element={<QueueDisplay />} />
             <Route path="/admin-dorak-control-067" element={<AdminControl />} />
             <Route path="/dorak-admin-067" element={<AdminControl />} />
             <Route path="*" element={<NotFound />} />

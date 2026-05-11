@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Home,
   LogOut,
+  MonitorPlay,
   Sparkles,
   Store,
   Ticket,
@@ -28,7 +29,6 @@ import {
   cleanShopId,
   ensureShop,
   getTickets,
-  getWaitingTickets,
   serveNextTicket,
   type Shop,
   type Ticket as QueueTicket,
@@ -392,7 +392,7 @@ export function DashboardQueue() {
             </div>
           </section>
 
-          <section className="grid gap-3 sm:grid-cols-3">
+          <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-[1.6rem] border border-teal-100 bg-white p-5 shadow-sm">
               <UsersRound className="mb-4 h-6 w-6 text-teal-700" />
               <p className="text-sm font-bold text-slate-500">في الانتظار</p>
@@ -422,6 +422,20 @@ export function DashboardQueue() {
                 <ArrowLeft className="h-5 w-5 transition group-hover:-translate-x-1" />
               </div>
             </button>
+
+            <Link
+              to={`/display/${activeShopId}`}
+              target="_blank"
+              rel="noreferrer"
+              className="group rounded-[1.6rem] bg-teal-700 p-5 text-right text-white shadow-lg shadow-teal-900/15 transition hover:bg-teal-800"
+            >
+              <MonitorPlay className="mb-4 h-6 w-6" />
+              <p className="text-sm font-bold text-teal-50/80">شاشة العرض</p>
+              <div className="mt-2 flex items-center justify-between gap-3">
+                <span className="text-2xl font-black">فتح الشاشة</span>
+                <ArrowLeft className="h-5 w-5 transition group-hover:-translate-x-1" />
+              </div>
+            </Link>
           </section>
 
           <section className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm shadow-teal-900/5">
