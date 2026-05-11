@@ -16,6 +16,7 @@ import { ensureOwnerProfile, updateOwnerPlan } from "@/lib/owner-profile";
 import type { SubscriptionPlanId } from "@/lib/subscription-plans";
 
 const PLAN_STORAGE_KEY = "dorak-selected-owner-plan";
+const PAID_SIGNUP_APPROVED_KEY = "dorak-paid-signup-approved";
 
 type AuthMode = "sign_in" | "sign_up";
 type AuthAction = AuthMode | null;
@@ -26,11 +27,11 @@ const isSubscriptionPlan = (
 
 const getAuthMessage = (message: string) => {
   if (message.includes("User already registered")) {
-    return "هذا البريد الإلكتروني مسجل بالفعل، لا يمكن إنشاء الحساب مرتين.";
+    return "هذا البريد الإلكتروني مسجل بالفعل، استخدم تسجيل الدخول.";
   }
 
   if (message.includes("Invalid login credentials")) {
-    return "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+    return "هذا الحساب غير موجود أو أن البريد الإلكتروني أو كلمة المرور غير صحيحة.";
   }
 
   return message;
@@ -50,9 +51,19 @@ export function BusinessAuth() {
   const [accountPrepared, setAccountPrepared] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
+  const hasPaidSignupApproval =
+    typeof window !== "undefined" &&
+    window.localStorage.getItem(PAID_SIGNUP_APPROVED_KEY) === "true";
+
   useEffect(() => {
     const planFromUrl = searchParams.get("plan");
     const storedPlan = window.localStorage.getItem(PLAN_STORAGE_KEY);
+    const paidApproved = searchParams.get("paid") === "success";
+
+    if (paidApproved) {
+      window.localStorage.setItem(PAID_SIGNUP_APPROVED_KEY, "true");
+      setFormMessage("تم تأكيد الدفع. يمكنك الآن إنشاء حساب الباقة الشهرية.");
+    }
 
     if (isSubscriptionPlan(planFromUrl)) {
       setSelectedPlan(planFromUrl);
@@ -92,6 +103,9 @@ export function BusinessAuth() {
       })
       .then(() => {
         setAccountPrepared(true);
+        if (selectedPlan === "monthly") {
+          window.localStorage.removeItem(PAID_SIGNUP_APPROVED_KEY);
+        }
         toast.success("تم تجهيز لوحة التحكم الخاصة بك");
         navigate("/dashboard", { replace: true });
       })
@@ -113,6 +127,10 @@ export function BusinessAuth() {
   const selectPlan = (plan: SubscriptionPlanId) => {
     setSelectedPlan(plan);
     window.localStorage.setItem(PLAN_STORAGE_KEY, plan);
+
+    if (plan === "trial") {
+      window.localStorage.removeItem(PAID_SIGNUP_APPROVED_KEY);
+    }
   };
 
   const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
@@ -122,12 +140,27 @@ export function BusinessAuth() {
     setIsPreparingAccount(true);
 
     if (mode === "sign_up") {
+      if (selectedPlan === "monthly" && !hasPaidSignupApproval) {
+        setIsPreparingAccount(false);
+        toast.error("يجب إتمام الدفع أولاً قبل إنشاء حساب الباقة الشهرية");
+        navigate("/pricing", { replace: false });
+        return;
+      }
+
+      const trimmedBusinessName = businessName.trim();
+
+      if (!trimmedBusinessName) {
+        toast.error("يرجى إدخال اسم النشاط التجاري أولاً");
+        setIsPreparingAccount(false);
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            business_name: businessName || email.split("@")[0],
+            business_name: trimmedBusinessName,
             subscription_plan: selectedPlan,
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
@@ -154,11 +187,14 @@ export function BusinessAuth() {
         data.session.user.id,
         data.session.user.email,
         selectedPlan,
-        businessName
+        trimmedBusinessName
       )
         .then(() => updateOwnerPlan(data.session.user.id, selectedPlan))
         .then(() => {
           setAccountPrepared(true);
+          if (selectedPlan === "monthly") {
+            window.localStorage.removeItem(PAID_SIGNUP_APPROVED_KEY);
+          }
           toast.success("تم إنشاء الحساب وتجهيز لوحة التحكم");
           navigate("/dashboard", { replace: true });
         })
@@ -228,17 +264,17 @@ export function BusinessAuth() {
 
           <p className="text-base leading-8 text-teal-50/85">
             اختر الباقة المناسبة، ثم أنشئ حساب صاحب العمل بالبريد وكلمة المرور.
-            بعد التسجيل سيتم تجهيز لوحة تحكم خاصة بمتجرك مع رابط QR جاهز.
+            في الباقة الشهرية يجب إتمام الدفع أولاً قبل السماح بإنشاء الحساب.
           </p>
 
           <div className="mt-8 rounded-[1.7rem] bg-white/12 p-5 ring-1 ring-white/15">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-6 w-6 text-amber-300" />
-              <p className="font-black">حساب آمن وخاص</p>
+              <p className="font-black">دخول للحسابات الحقيقية فقط</p>
             </div>
             <p className="mt-2 text-sm leading-7 text-teal-50/80">
-              الخطة المجانية مدتها 3 أيام فقط، وقبل انتهائها سيظهر تنبيه داخل
-              لوحة التحكم للترقية إلى الباقة الشهرية.
+              تسجيل الدخول مخصص فقط للحسابات الموجودة مسبقاً، أما إنشاء الحساب
+              الجديد للباقة المدفوعة فيتطلب الدفع أولاً.
             </p>
           </div>
 
@@ -269,10 +305,12 @@ export function BusinessAuth() {
             <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-black">
-                  {mode === "sign_up" ? "تسجيل صاحب عمل" : "دخول صاحب العمل"}
+                  {mode === "sign_up" ? "إنشاء حساب صاحب عمل" : "تسجيل الدخول"}
                 </h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  استخدم بريدك الإلكتروني وكلمة المرور للوصول إلى لوحة التحكم.
+                  {mode === "sign_up"
+                    ? "أنشئ حساباً جديداً حسب الباقة المختارة."
+                    : "الدخول فقط للحسابات المسجلة بالفعل."}
                 </p>
               </div>
 
@@ -301,8 +339,15 @@ export function BusinessAuth() {
               </p>
             ) : null}
 
+            {selectedPlan === "monthly" && mode === "sign_up" && !hasPaidSignupApproval ? (
+              <div className="mb-4 rounded-2xl bg-amber-50 px-4 py-4 text-sm font-bold leading-7 text-amber-900">
+                لإنشاء حساب الباقة الشهرية يجب إتمام الدفع أولاً، ثم ستعود هنا
+                تلقائياً لإكمال إنشاء الحساب.
+              </div>
+            ) : null}
+
             <p className="mb-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold leading-7 text-slate-700">
-              ملاحظة: لا يمكن إنشاء حسابين بنفس البريد الإلكتروني.
+              ملاحظة: من لا يملك حساباً مسجلاً لا يمكنه الدخول من شاشة تسجيل الدخول.
             </p>
 
             {loading || isPreparingAccount ? (
@@ -367,12 +412,21 @@ export function BusinessAuth() {
                   </div>
                 </label>
 
-                <button
-                  type="submit"
-                  className="w-full rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
-                >
-                  {mode === "sign_up" ? "إنشاء الحساب" : "دخول للوحة التحكم"}
-                </button>
+                {mode === "sign_up" && selectedPlan === "monthly" && !hasPaidSignupApproval ? (
+                  <Link
+                    to="/pricing"
+                    className="inline-flex w-full items-center justify-center rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
+                  >
+                    الذهاب إلى الدفع أولاً
+                  </Link>
+                ) : (
+                  <button
+                    type="submit"
+                    className="w-full rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
+                  >
+                    {mode === "sign_up" ? "إنشاء الحساب" : "دخول للوحة التحكم"}
+                  </button>
+                )}
               </form>
             )}
           </div>

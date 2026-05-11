@@ -1,9 +1,21 @@
 import { CheckCircle2, CreditCard, ShieldCheck, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
 
+const PLAN_STORAGE_KEY = "dorak-selected-owner-plan";
+const PAID_SIGNUP_APPROVED_KEY = "dorak-paid-signup-approved";
+
 const Pricing = () => {
+  const navigate = useNavigate();
   const monthlyPlan = SUBSCRIPTION_PLANS.find((plan) => plan.id === "monthly");
+
+  const handleContinuePayment = () => {
+    window.localStorage.setItem(PLAN_STORAGE_KEY, "monthly");
+    window.localStorage.setItem(PAID_SIGNUP_APPROVED_KEY, "true");
+    toast.success("تم تأكيد الدفع التجريبي، انتقل الآن لإنشاء الحساب");
+    navigate("/auth?plan=monthly&paid=success", { replace: true });
+  };
 
   return (
     <main
@@ -36,36 +48,36 @@ const Pricing = () => {
             </div>
 
             <h1 className="text-4xl font-black leading-tight sm:text-5xl">
-              فعّل الاشتراك المدفوع واستمر بدون توقف
+              الدفع أولاً ثم إنشاء الحساب
             </h1>
 
             <p className="mt-5 max-w-2xl text-base leading-8 text-teal-50/85">
-              هذه الصفحة مخصصة للترقية إلى الباقة الشهرية. بعد الدفع يمكن إبقاء
-              لوحة التحكم ورابط المتجر وQR نشطين بشكل مستمر.
+              تم ضبط مسار الباقة المدفوعة بحيث يمر العميل بصفحة الدفع أولاً،
+              وبعد تأكيد الدفع يتم توجيهه مباشرة إلى صفحة إنشاء الحساب الشهري.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
                 <Sparkles className="mb-3 h-6 w-6 text-amber-300" />
-                <p className="font-black">تشغيل مستمر</p>
+                <p className="font-black">بدء منظم</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  بدون انتهاء التجربة المجانية
+                  الدفع يسبق التسجيل
                 </p>
               </div>
 
               <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
                 <ShieldCheck className="mb-3 h-6 w-6 text-amber-300" />
-                <p className="font-black">لوحة خاصة</p>
+                <p className="font-black">حسابات صحيحة</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  إدارة كاملة لمتجرك وطوابيرك
+                  لا دخول إلا للحسابات الموجودة
                 </p>
               </div>
 
               <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
                 <CreditCard className="mb-3 h-6 w-6 text-amber-300" />
-                <p className="font-black">دفع شهري واضح</p>
+                <p className="font-black">خطة شهرية</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  سعر ثابت وسهل
+                  تفعيل قبل إنشاء الحساب
                 </p>
               </div>
             </div>
@@ -102,18 +114,19 @@ const Pricing = () => {
             </ul>
 
             <div className="mt-8 rounded-[1.7rem] bg-slate-50 p-5">
-              <p className="text-sm font-black text-slate-800">الدفع</p>
+              <p className="text-sm font-black text-slate-800">خطوة الدفع</p>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                صفحة الدفع جاهزة كصفحة مخصصة للباقة الشهرية. إذا أردت، يمكنني في
-                الخطوة التالية ربطها ببوابة دفع حقيقية مثل Stripe أو Lemon Squeezy.
+                بعد الضغط على الزر التالي سيتم اعتبار الدفع مؤكداً داخل التطبيق،
+                ثم يتم تحويل العميل مباشرة إلى إنشاء حساب الباقة الشهرية.
               </p>
 
               <button
                 type="button"
+                onClick={handleContinuePayment}
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-4 font-black text-slate-950 transition hover:bg-amber-400"
               >
                 <CreditCard className="h-5 w-5" />
-                متابعة الدفع الشهري
+                الدفع ثم إنشاء الحساب
               </button>
             </div>
           </section>
