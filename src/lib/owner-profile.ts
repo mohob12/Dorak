@@ -16,7 +16,20 @@ export type OwnerProfile = {
   updated_at: string;
 };
 
-const makeDefaultShopId = (userId: string) => `shop-${userId.slice(0, 8)}`;
+const makeDefaultShopId = (
+  userId: string,
+  businessName?: string,
+  email?: string
+) => {
+  const preferredName = businessName?.trim() || email?.split("@")[0] || "متجري";
+  const normalizedName = cleanShopId(preferredName);
+
+  if (normalizedName) {
+    return normalizedName;
+  }
+
+  return `shop-${userId.slice(0, 8)}`;
+};
 
 export async function ensureOwnerProfile(
   userId: string,
@@ -54,14 +67,22 @@ export async function ensureOwnerProfile(
   }
 
   const isMonthly = selectedPlan === "monthly";
-  const shopId = makeDefaultShopId(userId);
+  const shopId = makeDefaultShopId(userId, profileBusinessName, email);
+
+  const { data: existingShop } = await supabase
+    .from("shops")
+    .select("id")
+    .eq("id", shopId)
+    .maybeSingle();
+
+  const finalShopId = existingShop ? `${shopId}-${userId.slice(0, 6)}` : shopId;
 
   const { data: newProfile, error: insertError } = await supabase
     .from("profiles")
     .insert({
       id: userId,
       business_name: profileBusinessName,
-      shop_id: shopId,
+      shop_id: finalShopId,
       subscription_plan: selectedPlan,
       subscription_status: isMonthly ? "active" : "trialing",
       trial_ends_at: isMonthly ? null : getTrialEndsAt(),
@@ -74,7 +95,7 @@ export async function ensureOwnerProfile(
   }
 
   const { error: shopError } = await supabase.from("shops").upsert({
-    id: shopId,
+    id: finalShopId,
     name: profileBusinessName,
     avg_service_minutes: 4,
     owner_id: userId,
