@@ -6,14 +6,12 @@ import {
   Sparkles,
   TicketCheck,
   UsersRound,
-  XCircle,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { TurnAlert } from "@/components/turn-alert";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  cancelTicket,
   createTicket,
   ensureShop,
   formatWaitTime,
@@ -34,7 +32,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [isBooking, setIsBooking] = useState(false);
-  const [isCancelling, setIsCancelling] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
   const previousPosition = useRef<number | null>(null);
@@ -51,12 +48,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
     if (storedTicketId) {
       const ticket = await getTicket(storedTicketId);
-
-      if (ticket?.status === "cancelled") {
-        window.localStorage.removeItem(storageKey);
-      }
-
-      setCurrentTicket(ticket?.status === "cancelled" ? null : ticket);
+      setCurrentTicket(ticket);
     }
   }, [shopId, storageKey]);
 
@@ -174,28 +166,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
     } finally {
       setIsBooking(false);
-    }
-  };
-
-  const handleCancelTicket = async () => {
-    if (!currentTicket || currentTicket.status !== "waiting") {
-      return;
-    }
-
-    setIsCancelling(true);
-
-    try {
-      await cancelTicket(currentTicket.id);
-      window.localStorage.removeItem(storageKey);
-      setCurrentTicket(null);
-      previousTicketStatus.current = null;
-      previousPosition.current = null;
-      toast.success("تم إلغاء دورك بنجاح");
-      await loadQueue();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر إلغاء الدور");
-    } finally {
-      setIsCancelling(false);
     }
   };
 
@@ -324,18 +294,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
                     ? "دورك قريب جداً، يرجى الاستعداد."
                     : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
               </p>
-
-              {!isServed ? (
-                <button
-                  type="button"
-                  onClick={handleCancelTicket}
-                  disabled={isCancelling}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-3xl bg-red-50 px-5 py-4 text-base font-black text-red-700 ring-1 ring-red-100 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <XCircle className="h-5 w-5" />
-                  {isCancelling ? "جاري إلغاء الدور..." : "إلغاء الدور"}
-                </button>
-              ) : null}
             </div>
           )}
         </section>
