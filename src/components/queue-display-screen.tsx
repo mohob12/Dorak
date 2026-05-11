@@ -180,7 +180,7 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
                 شاشة عرض الأدوار
               </h1>
               <p className="mt-3 text-base leading-8 text-teal-50/85 sm:text-lg">
-                {shop?.name || "المتجر"} — تابع الدور الحالي والأدوار القادمة بشكل مباشر.
+                تابع الدور الحالي والأدوار القادمة بشكل مباشر.
               </p>
             </div>
 
