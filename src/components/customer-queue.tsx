@@ -3,6 +3,7 @@
 import {
   Bell,
   Clock,
+  RotateCcw,
   Sparkles,
   TicketCheck,
   UsersRound,
@@ -160,6 +161,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       previousPosition.current = null;
       setCurrentTicket(ticket);
       setCustomerName("");
+      setShowTurnAlert(false);
       toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number ?? "—"}`);
       await loadQueue();
     } catch (error) {
@@ -167,6 +169,15 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     } finally {
       setIsBooking(false);
     }
+  };
+
+  const handleBookAgain = () => {
+    window.localStorage.removeItem(storageKey);
+    setCurrentTicket(null);
+    setShowTurnAlert(false);
+    previousTicketStatus.current = null;
+    previousPosition.current = null;
+    toast.success("يمكنك الآن حجز دور جديد");
   };
 
   return (
@@ -289,11 +300,22 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
               <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-center text-sm leading-6 text-teal-800">
                 {isServed
-                  ? "تفضل إلى الخدمة، شكراً لاستخدام Dorak."
+                  ? "تم اجتياز دورك، ويمكنك الآن التسجيل مرة ثانية في الطابور إذا أردت."
                   : ticketPosition <= 1
                     ? "دورك قريب جداً، يرجى الاستعداد."
                     : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
               </p>
+
+              {isServed ? (
+                <button
+                  type="button"
+                  onClick={handleBookAgain}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
+                >
+                  <RotateCcw className="h-5 w-5" />
+                  التسجيل مرة ثانية
+                </button>
+              ) : null}
             </div>
           )}
         </section>
