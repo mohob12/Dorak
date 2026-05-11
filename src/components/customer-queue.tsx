@@ -34,6 +34,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [customerName, setCustomerName] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
+  const [hasMissedTurn, setHasMissedTurn] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
   const previousPosition = useRef<number | null>(null);
 
@@ -104,6 +105,32 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     previousTicketStatus.current = currentTicket?.status || null;
   }, [currentTicket?.status]);
 
+  useEffect(() => {
+    if (currentTicket?.status !== "served" || !currentTicket.served_at) {
+      setHasMissedTurn(false);
+      return;
+    }
+
+    const servedAtTime = new Date(currentTicket.served_at).getTime();
+    const twoMinutesLater = servedAtTime + 2 * 60 * 1000;
+    const remainingTime = twoMinutesLater - Date.now();
+
+    if (remainingTime <= 0) {
+      setHasMissedTurn(true);
+      return;
+    }
+
+    setHasMissedTurn(false);
+
+    const timer = window.setTimeout(() => {
+      setHasMissedTurn(true);
+    }, remainingTime);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [currentTicket?.served_at, currentTicket?.status]);
+
   const ticketPosition = useMemo(() => {
     if (!currentTicket || currentTicket.status !== "waiting") {
       return 0;
@@ -162,6 +189,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       setCurrentTicket(ticket);
       setCustomerName("");
       setShowTurnAlert(false);
+      setHasMissedTurn(false);
       toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number ?? "—"}`);
       await loadQueue();
     } catch (error) {
@@ -175,6 +203,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     window.localStorage.removeItem(storageKey);
     setCurrentTicket(null);
     setShowTurnAlert(false);
+    setHasMissedTurn(false);
     previousTicketStatus.current = null;
     previousPosition.current = null;
     toast.success("يمكنك الآن حجز دور جديد");
@@ -263,18 +292,30 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
             <div>
               <div
                 className={`rounded-[1.7rem] p-5 text-center ${
-                  isServed
-                    ? "bg-emerald-100 text-emerald-900"
-                    : "bg-amber-100 text-amber-950"
+                  hasMissedTurn
+                    ? "bg-red-100 text-red-800"
+                    : isServed
+                      ? "bg-emerald-100 text-emerald-900"
+                      : "bg-amber-100 text-amber-950"
                 }`}
               >
                 <p className="text-sm font-bold">
-                  {isServed ? "حان دورك الآن" : "رقم تذكرتك"}
+                  {hasMissedTurn
+                    ? "تم اجتياز دورك"
+                    : isServed
+                      ? "حان دورك الآن"
+                      : "رقم تذكرتك"}
                 </p>
                 <p className="mt-2 text-6xl font-black tracking-tight">
                   {displayTicketNumber}
                 </p>
               </div>
+
+              {hasMissedTurn ? (
+                <p className="mt-4 rounded-2xl bg-red-50 px-4 py-4 text-center text-lg font-black leading-7 text-red-700">
+                  تم اجتياز دورك
+                </p>
+              ) : null}
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-[1.5rem] bg-slate-50 p-4">
@@ -299,11 +340,13 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
               </div>
 
               <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-center text-sm leading-6 text-teal-800">
-                {isServed
-                  ? "تم اجتياز دورك، ويمكنك الآن التسجيل مرة ثانية في الطابور إذا أردت."
-                  : ticketPosition <= 1
-                    ? "دورك قريب جداً، يرجى الاستعداد."
-                    : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
+                {hasMissedTurn
+                  ? "مرّ أكثر من دقيقتين على دورك. يمكنك التسجيل مرة ثانية إذا أردت."
+                  : isServed
+                    ? "تم اجتياز دورك، ويمكنك الآن التسجيل مرة ثانية في الطابور إذا أردت."
+                    : ticketPosition <= 1
+                      ? "دورك قريب جداً، يرجى الاستعداد."
+                      : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
               </p>
 
               {isServed ? (
