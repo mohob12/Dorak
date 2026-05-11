@@ -1,9 +1,14 @@
 "use client";
 
 import { MonitorPlay, Store, Ticket, UsersRound, Volume2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { ensureShop, getTickets, type Shop, type Ticket as QueueTicket } from "@/lib/queue";
+import {
+  ensureShop,
+  getTickets,
+  type Shop,
+  type Ticket as QueueTicket,
+} from "@/lib/queue";
 
 type QueueDisplayScreenProps = {
   shopId: string;
@@ -64,14 +69,14 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
   const [highlightTurn, setHighlightTurn] = useState(false);
   const previousCurrentTurnId = useRef<string | null>(null);
 
-  const loadDisplayData = async () => {
+  const loadDisplayData = useCallback(async () => {
     const loadedShop = await ensureShop(shopId);
     const loadedTickets = await getTickets(loadedShop.id);
 
     setShop(loadedShop);
     setTickets(loadedTickets);
     setIsLoading(false);
-  };
+  }, [shopId]);
 
   useEffect(() => {
     loadDisplayData();
@@ -87,15 +92,20 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
           filter: `shop_id=eq.${shopId}`,
         },
         () => {
-          loadDisplayData();
+          void loadDisplayData();
         }
       )
       .subscribe();
 
+    const refreshTimer = window.setInterval(() => {
+      void loadDisplayData();
+    }, 3000);
+
     return () => {
-      supabase.removeChannel(channel);
+      window.clearInterval(refreshTimer);
+      void supabase.removeChannel(channel);
     };
-  }, [shopId]);
+  }, [loadDisplayData, shopId]);
 
   const waitingTickets = useMemo(() => {
     return tickets.filter((ticket) => ticket.status === "waiting");
