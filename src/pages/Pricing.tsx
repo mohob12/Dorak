@@ -1,6 +1,8 @@
 import { CheckCircle2, CreditCard, ShieldCheck, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useSession } from "@/hooks/use-session";
+import { updateOwnerPlan } from "@/lib/owner-profile";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
 
 const PLAN_STORAGE_KEY = "dorak-selected-owner-plan";
@@ -8,12 +10,29 @@ const PAID_SIGNUP_APPROVED_KEY = "dorak-paid-signup-approved";
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { user } = useSession();
   const monthlyPlan = SUBSCRIPTION_PLANS.find((plan) => plan.id === "monthly");
 
-  const handleContinuePayment = () => {
+  const handleContinuePayment = async () => {
     window.localStorage.setItem(PLAN_STORAGE_KEY, "monthly");
+
+    if (user) {
+      const loadingToast = toast.loading("جاري ترقية حسابك الحالي...");
+
+      const upgradedProfile = await updateOwnerPlan(user.id, "monthly");
+
+      toast.dismiss(loadingToast);
+      toast.success("تمت ترقية حسابك الحالي بنجاح بدون تغيير بيانات الطابور");
+
+      navigate("/dashboard", {
+        replace: true,
+        state: { upgradedPlan: upgradedProfile.subscription_plan },
+      });
+      return;
+    }
+
     window.localStorage.setItem(PAID_SIGNUP_APPROVED_KEY, "true");
-    toast.success("تم تأكيد الدفع التجريبي، انتقل الآن لإنشاء الحساب");
+    toast.success("تم تأكيد الدفع، يمكنك الآن إنشاء الحساب الشهري");
     navigate("/auth?plan=monthly&paid=success", { replace: true });
   };
 
@@ -48,36 +67,36 @@ const Pricing = () => {
             </div>
 
             <h1 className="text-4xl font-black leading-tight sm:text-5xl">
-              الدفع أولاً ثم إنشاء الحساب
+              ترقية آمنة بدون فقدان بيانات الطابور
             </h1>
 
             <p className="mt-5 max-w-2xl text-base leading-8 text-teal-50/85">
-              تم ضبط مسار الباقة المدفوعة بحيث يمر العميل بصفحة الدفع أولاً،
-              وبعد تأكيد الدفع يتم توجيهه مباشرة إلى صفحة إنشاء الحساب الشهري.
+              الحسابات المسجلة يمكن ترقيتها مباشرة إلى الباقة الشهرية مع الحفاظ
+              على نفس المتجر ونفس بيانات الزبائن والتذاكر الحالية داخل الطابور.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
                 <Sparkles className="mb-3 h-6 w-6 text-amber-300" />
-                <p className="font-black">بدء منظم</p>
+                <p className="font-black">ترقية مباشرة</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  الدفع يسبق التسجيل
+                  على نفس الحساب الحالي
                 </p>
               </div>
 
               <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
                 <ShieldCheck className="mb-3 h-6 w-6 text-amber-300" />
-                <p className="font-black">حسابات صحيحة</p>
+                <p className="font-black">بدون فقدان البيانات</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  لا دخول إلا للحسابات الموجودة
+                  بيانات الزبائن والطابور تبقى كما هي
                 </p>
               </div>
 
               <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
                 <CreditCard className="mb-3 h-6 w-6 text-amber-300" />
-                <p className="font-black">خطة شهرية</p>
+                <p className="font-black">دفع أولاً</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  تفعيل قبل إنشاء الحساب
+                  ثم تفعيل أو إنشاء الحساب
                 </p>
               </div>
             </div>
@@ -114,10 +133,13 @@ const Pricing = () => {
             </ul>
 
             <div className="mt-8 rounded-[1.7rem] bg-slate-50 p-5">
-              <p className="text-sm font-black text-slate-800">خطوة الدفع</p>
+              <p className="text-sm font-black text-slate-800">
+                {user ? "ترقية الحساب الحالي" : "إنشاء حساب بعد الدفع"}
+              </p>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                بعد الضغط على الزر التالي سيتم اعتبار الدفع مؤكداً داخل التطبيق،
-                ثم يتم تحويل العميل مباشرة إلى إنشاء حساب الباقة الشهرية.
+                {user
+                  ? "إذا كان لديك حساب مسجل بالفعل، فسيتم تفعيل الباقة الشهرية على نفس الحساب مباشرة بدون تغيير أو حذف بيانات الزبائن في الطابور."
+                  : "إذا لم يكن لديك حساب بعد، فسيتم الدفع أولاً ثم توجيهك مباشرة إلى إنشاء حساب جديد للباقة الشهرية."}
               </p>
 
               <button
@@ -126,7 +148,7 @@ const Pricing = () => {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-4 font-black text-slate-950 transition hover:bg-amber-400"
               >
                 <CreditCard className="h-5 w-5" />
-                الدفع ثم إنشاء الحساب
+                {user ? "الدفع ثم ترقية الحساب الحالي" : "الدفع ثم إنشاء الحساب"}
               </button>
             </div>
           </section>
