@@ -7,6 +7,7 @@ import {
   Home,
   LogOut,
   MonitorPlay,
+  PlusCircle,
   Sparkles,
   Store,
   Ticket,
@@ -27,6 +28,7 @@ import {
 import {
   DEFAULT_SHOP_ID,
   cleanShopId,
+  createTicket,
   ensureShop,
   getTickets,
   serveNextTicket,
@@ -52,6 +54,8 @@ export function DashboardQueue() {
   const [waitingTickets, setWaitingTickets] = useState<QueueTicket[]>([]);
   const [isServing, setIsServing] = useState(false);
   const [isPreparingDashboard, setIsPreparingDashboard] = useState(true);
+  const [manualCustomerName, setManualCustomerName] = useState("");
+  const [isAddingCustomer, setIsAddingCustomer] = useState(false);
 
   const activePlan = useMemo(() => {
     return SUBSCRIPTION_PLANS.find(
@@ -170,6 +174,30 @@ export function DashboardQueue() {
     setActiveShopId(normalizedShopId);
     await loadQueue(normalizedShopId, user.id);
     toast.success("تم تحديث القائمة");
+  };
+
+  const addCustomerManually = async () => {
+    if (!user || trialExpired) {
+      return;
+    }
+
+    const trimmedName = manualCustomerName.trim();
+
+    if (!trimmedName) {
+      toast.error("يرجى إدخال اسم العميل أولاً");
+      return;
+    }
+
+    setIsAddingCustomer(true);
+
+    try {
+      const ticket = await createTicket(activeShopId, trimmedName);
+      setManualCustomerName("");
+      toast.success(`تمت إضافة ${trimmedName} إلى الطابور برقم ${ticket.ticket_number ?? "—"}`);
+      await loadQueue(activeShopId, user.id);
+    } finally {
+      setIsAddingCustomer(false);
+    }
   };
 
   const serveNext = async () => {
@@ -389,6 +417,38 @@ export function DashboardQueue() {
               >
                 {upgradePlanLabel}
               </Link>
+            </div>
+          </section>
+
+          <section className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm shadow-teal-900/5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xl font-black">إضافة زبون يدوياً</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  أدخل اسم العميل وسيتم إضافته مباشرة إلى الطابور.
+                </p>
+              </div>
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-700">
+                <PlusCircle className="h-6 w-6" />
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <input
+                type="text"
+                value={manualCustomerName}
+                onChange={(event) => setManualCustomerName(event.target.value)}
+                placeholder="اسم العميل"
+                className="rounded-2xl border border-teal-100 bg-slate-50 px-4 py-4 text-right font-bold text-slate-900 outline-none transition focus:border-teal-400 focus:bg-white"
+              />
+              <button
+                type="button"
+                onClick={addCustomerManually}
+                disabled={isAddingCustomer}
+                className="rounded-2xl bg-amber-500 px-5 py-4 text-sm font-black text-slate-950 shadow-lg shadow-amber-500/20 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isAddingCustomer ? "جاري الإضافة..." : "إضافة للطابور"}
+              </button>
             </div>
           </section>
 
