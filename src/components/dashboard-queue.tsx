@@ -274,12 +274,6 @@ export function DashboardQueue() {
                   <Home className="h-4 w-4" />
                   الصفحة الرئيسية
                 </Link>
-                <Link
-                  to={plansPageLink}
-                  className="rounded-2xl bg-white/12 px-4 py-3 text-sm font-black text-white ring-1 ring-white/15 transition hover:bg-white/18"
-                >
-                  {upgradePlanLabel}
-                </Link>
                 <button
                   type="button"
                   onClick={logout}
