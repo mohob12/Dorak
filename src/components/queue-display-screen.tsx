@@ -1,7 +1,7 @@
 "use client";
 
-import { MonitorPlay, Store, Ticket, UsersRound } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { MonitorPlay, Store, Ticket, UsersRound, Volume2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ensureShop, getTickets, type Shop, type Ticket as QueueTicket } from "@/lib/queue";
 
@@ -9,10 +9,60 @@ type QueueDisplayScreenProps = {
   shopId: string;
 };
 
+const playDisplayAlert = () => {
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as typeof window & {
+      webkitAudioContext?: typeof AudioContext;
+    }).webkitAudioContext;
+
+  if (!AudioContextClass) {
+    return;
+  }
+
+  const audioContext = new AudioContextClass();
+  void audioContext.resume();
+
+  const notes = [784, 988, 1174, 1568, 1174, 1568];
+
+  notes.forEach((frequency, index) => {
+    const delay = index * 0.22;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(
+      frequency,
+      audioContext.currentTime + delay
+    );
+
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(
+      0.3,
+      audioContext.currentTime + delay + 0.03
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioContext.currentTime + delay + 0.2
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(audioContext.currentTime + delay);
+    oscillator.stop(audioContext.currentTime + delay + 0.22);
+  });
+
+  window.setTimeout(() => {
+    void audioContext.close();
+  }, 2200);
+};
+
 export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
   const [shop, setShop] = useState<Shop | null>(null);
   const [tickets, setTickets] = useState<QueueTicket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [highlightTurn, setHighlightTurn] = useState(false);
+  const previousCurrentTurnId = useRef<string | null>(null);
 
   const loadDisplayData = async () => {
     const loadedShop = await ensureShop(shopId);
@@ -64,6 +114,33 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
   const currentTurn = servedTickets[0] || null;
   const upcomingTurns = waitingTickets.slice(0, 6);
 
+  useEffect(() => {
+    if (!currentTurn?.id) {
+      previousCurrentTurnId.current = null;
+      return;
+    }
+
+    if (
+      previousCurrentTurnId.current &&
+      previousCurrentTurnId.current !== currentTurn.id
+    ) {
+      setHighlightTurn(true);
+      playDisplayAlert();
+
+      const timer = window.setTimeout(() => {
+        setHighlightTurn(false);
+      }, 4500);
+
+      previousCurrentTurnId.current = currentTurn.id;
+
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
+
+    previousCurrentTurnId.current = currentTurn.id;
+  }, [currentTurn?.id]);
+
   if (isLoading) {
     return (
       <main
@@ -113,8 +190,31 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
           </div>
         </header>
 
+        {highlightTurn && currentTurn ? (
+          <section className="mt-6 animate-in fade-in zoom-in-95 duration-500">
+            <div className="rounded-[2rem] border-4 border-amber-300 bg-amber-400 px-6 py-5 text-center text-slate-950 shadow-2xl shadow-amber-500/30">
+              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-amber-700">
+                <Volume2 className="h-7 w-7 animate-pulse" />
+              </div>
+              <p className="text-lg font-black">تنبيه جديد</p>
+              <p className="mt-2 text-3xl font-black sm:text-4xl">
+                الآن الدور رقم {currentTurn.ticket_number ?? "—"}
+              </p>
+              <p className="mt-2 text-sm font-bold text-slate-800">
+                يرجى توجه صاحب هذا الرقم إلى مكان الخدمة فوراً
+              </p>
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[2.5rem] bg-amber-400 p-6 text-center text-slate-950 shadow-xl shadow-amber-500/20 sm:p-10">
+          <div
+            className={`rounded-[2.5rem] p-6 text-center text-slate-950 shadow-xl sm:p-10 ${
+              highlightTurn
+                ? "animate-pulse bg-amber-300 shadow-amber-500/30 ring-4 ring-amber-200"
+                : "bg-amber-400 shadow-amber-500/20"
+            }`}
+          >
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-white text-amber-700 shadow-lg">
               <MonitorPlay className="h-10 w-10" />
             </div>
@@ -122,7 +222,11 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
             <p className="text-lg font-black">الدور الحالي</p>
             <div className="mt-5 rounded-[2rem] bg-white px-6 py-8 shadow-lg">
               <p className="text-sm font-bold text-slate-500">رقم التذكرة</p>
-              <p className="mt-3 text-7xl font-black tracking-tight sm:text-9xl">
+              <p
+                className={`mt-3 font-black tracking-tight sm:text-9xl ${
+                  highlightTurn ? "text-8xl text-teal-800" : "text-7xl"
+                }`}
+              >
                 {currentTurn?.ticket_number ?? "—"}
               </p>
             </div>
