@@ -10,6 +10,7 @@ import {
   Store,
   Ticket,
   UsersRound,
+  XCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
@@ -26,6 +27,7 @@ import {
   DEFAULT_SHOP_ID,
   cleanShopId,
   ensureShop,
+  getTickets,
   getWaitingTickets,
   serveNextTicket,
   type Shop,
@@ -46,6 +48,7 @@ export function DashboardQueue() {
   const [shopIdInput, setShopIdInput] = useState(DEFAULT_SHOP_ID);
   const [activeShopId, setActiveShopId] = useState(DEFAULT_SHOP_ID);
   const [shop, setShop] = useState<Shop | null>(null);
+  const [tickets, setTickets] = useState<QueueTicket[]>([]);
   const [waitingTickets, setWaitingTickets] = useState<QueueTicket[]>([]);
   const [isServing, setIsServing] = useState(false);
   const [isPreparingDashboard, setIsPreparingDashboard] = useState(true);
@@ -74,10 +77,14 @@ export function DashboardQueue() {
 
   const loadQueue = async (shopId: string, ownerId: string) => {
     const loadedShop = await ensureShop(shopId, ownerId);
-    const tickets = await getWaitingTickets(loadedShop.id);
+    const loadedTickets = await getTickets(loadedShop.id);
+    const loadedWaitingTickets = loadedTickets.filter(
+      (ticket) => ticket.status === "waiting"
+    );
 
     setShop(loadedShop);
-    setWaitingTickets(tickets);
+    setTickets(loadedTickets);
+    setWaitingTickets(loadedWaitingTickets);
   };
 
   useEffect(() => {
@@ -194,6 +201,42 @@ export function DashboardQueue() {
 
   const nextTicket = waitingTickets[0];
   const nextTicketNumber = nextTicket?.ticket_number ?? "—";
+
+  const getStatusLabel = (status: QueueTicket["status"]) => {
+    if (status === "served") {
+      return "تمت خدمته";
+    }
+
+    if (status === "cancelled") {
+      return "ملغي";
+    }
+
+    return "ينتظر";
+  };
+
+  const getStatusClasses = (status: QueueTicket["status"]) => {
+    if (status === "served") {
+      return "bg-emerald-100 text-emerald-800";
+    }
+
+    if (status === "cancelled") {
+      return "bg-red-100 text-red-700";
+    }
+
+    return "bg-teal-100 text-teal-800";
+  };
+
+  const getStatusIcon = (status: QueueTicket["status"]) => {
+    if (status === "served") {
+      return <CheckCircle2 className="h-4 w-4" />;
+    }
+
+    if (status === "cancelled") {
+      return <XCircle className="h-4 w-4" />;
+    }
+
+    return <Ticket className="h-4 w-4" />;
+  };
 
   if (loading || isPreparingDashboard) {
     return (
@@ -384,63 +427,85 @@ export function DashboardQueue() {
           <section className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm shadow-teal-900/5">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black">قائمة الطابور</h2>
+                <h2 className="text-xl font-black">حالات الأدوار</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  يتم التحديث تلقائياً عند حجز أو تمرير أي دور.
+                  يعرض حالة كل تذكرة: ينتظر، تمت خدمته، أو ملغي.
                 </p>
               </div>
               <Store className="h-7 w-7 text-teal-700" />
             </div>
 
-            {waitingTickets.length > 0 ? (
+            {tickets.length > 0 ? (
               <div className="space-y-3">
-                {waitingTickets.map((ticketItem, index) => (
-                  <div
-                    key={ticketItem.id}
-                    className="rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4"
-                  >
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`flex h-11 w-11 items-center justify-center rounded-2xl font-black ${
-                            index === 0
-                              ? "bg-amber-500 text-slate-950"
-                              : "bg-white text-teal-700"
-                          }`}
-                        >
-                          {ticketItem.ticket_number ?? "—"}
-                        </div>
-                        <div>
-                          <p className="font-black">
-                            {ticketItem.customer_name ||
-                              `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {index === 0 ? "الدور التالي" : `${index} قبله`}
-                          </p>
-                        </div>
-                      </div>
+                {tickets.map((ticketItem) => {
+                  const waitingIndex = waitingTickets.findIndex(
+                    (waitingTicket) => waitingTicket.id === ticketItem.id
+                  );
 
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                        <span className="inline-flex w-fit rounded-full bg-teal-100 px-3 py-1 text-xs font-bold text-teal-800">
-                          ينتظر
-                        </span>
-                        <TicketPrintCard
-                          shopId={activeShopId}
-                          ticket={ticketItem}
-                          peopleAhead={index}
-                          avgServiceMinutes={shop?.avg_service_minutes || 4}
-                        />
+                  return (
+                    <div
+                      key={ticketItem.id}
+                      className="rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4"
+                    >
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`flex h-11 w-11 items-center justify-center rounded-2xl font-black ${
+                              ticketItem.status === "waiting"
+                                ? "bg-amber-500 text-slate-950"
+                                : ticketItem.status === "served"
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {ticketItem.ticket_number ?? "—"}
+                          </div>
+                          <div>
+                            <p className="font-black">
+                              {ticketItem.customer_name ||
+                                `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
+                            </p>
+                            <p className="text-xs text-slate-500">
+                              {ticketItem.status === "waiting" && waitingIndex === 0
+                                ? "الدور التالي"
+                                : ticketItem.status === "waiting" && waitingIndex > 0
+                                  ? `${waitingIndex} قبله`
+                                  : ticketItem.status === "served"
+                                    ? "تمت الخدمة بنجاح"
+                                    : "تم إلغاء الدور من الزبون"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                          <span
+                            className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${getStatusClasses(
+                              ticketItem.status
+                            )}`}
+                          >
+                            {getStatusIcon(ticketItem.status)}
+                            {getStatusLabel(ticketItem.status)}
+                          </span>
+
+                          {ticketItem.status === "waiting" ? (
+                            <TicketPrintCard
+                              shopId={activeShopId}
+                              ticket={ticketItem}
+                              peopleAhead={waitingIndex >= 0 ? waitingIndex : 0}
+                              avgServiceMinutes={shop?.avg_service_minutes || 4}
+                            />
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-[1.5rem] bg-slate-50 px-5 py-10 text-center">
-                <p className="text-lg font-black">الطابور فارغ الآن</p>
+                <p className="text-lg font-black">لا توجد أدوار بعد</p>
                 <p className="mt-2 text-sm text-slate-500">
-                  شارك رمز QR ليبدأ الزبائن بحجز أدوارهم.
+                  عند حجز أول زبون سيظهر هنا مع حالته مباشرة.
                 </p>
               </div>
             )}

@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type TicketStatus = "waiting" | "served";
+export type TicketStatus = "waiting" | "served" | "cancelled";
 
 export type Shop = {
   id: string;
@@ -107,6 +107,20 @@ export async function ensureShop(shopId: string, ownerId?: string) {
   return newShop as Shop;
 }
 
+export async function getTickets(shopId: string) {
+  const { data, error } = await supabase
+    .from("tickets")
+    .select("*")
+    .eq("shop_id", shopId)
+    .order("ticket_number", { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data || []) as Ticket[];
+}
+
 export async function getWaitingTickets(shopId: string) {
   const { data, error } = await supabase
     .from("tickets")
@@ -180,6 +194,23 @@ export async function createTicket(shopId: string, customerName: string) {
   }
 
   return insertedTickets[0] as Ticket;
+}
+
+export async function cancelTicket(ticketId: string) {
+  const { data, error } = await supabase
+    .from("tickets")
+    .update({
+      status: "cancelled",
+    })
+    .eq("id", ticketId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as Ticket;
 }
 
 export async function serveNextTicket(shopId: string) {
