@@ -56,9 +56,9 @@ export function DashboardQueue() {
     );
   }, [profile?.subscription_plan]);
 
-  const plansPageLink = "/";
+  const plansPageLink = "/pricing";
   const upgradePlanLabel =
-    profile?.subscription_plan === "trial" ? "الترقية الآن" : "عرض الباقات";
+    profile?.subscription_plan === "trial" ? "الترقية الآن" : "عرض الباقة المدفوعة";
 
   const trialDaysLeft = useMemo(() => {
     return getTrialDaysLeft(profile?.trial_ends_at || null);
@@ -232,7 +232,7 @@ export function DashboardQueue() {
                 to={plansPageLink}
                 className="inline-flex items-center justify-center rounded-2xl bg-amber-500 px-6 py-4 font-black text-slate-950 transition hover:bg-amber-400"
               >
-                عرض الباقات المتوفرة
+                عرض الباقة المدفوعة
               </Link>
               <button
                 type="button"
@@ -319,7 +319,7 @@ export function DashboardQueue() {
                     تنبيه: المهلة المجانية قاربت على الانتهاء
                   </p>
                   <p className="mt-1 text-sm leading-7 text-amber-900/80">
-                    متبقّي تقريباً {trialDaysLeft} يوم. راجع الباقات المتوفرة
+                    متبقّي تقريباً {trialDaysLeft} يوم. راجع الباقة المدفوعة
                     للاستمرار دون توقف.
                   </p>
                   <Link
