@@ -148,7 +148,7 @@ const Index = () => {
                 </ul>
 
                 <Link
-                  to={`/auth?plan=${plan.id}`}
+                  to={plan.id === "monthly" ? "/pricing" : `/auth?plan=${plan.id}`}
                   className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
                     plan.id === "monthly"
                       ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
