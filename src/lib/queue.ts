@@ -18,6 +18,8 @@ export type Ticket = {
   status: TicketStatus;
   created_at: string;
   served_at: string | null;
+  customer_ready: boolean | null;
+  customer_ready_at: string | null;
 };
 
 export const DEFAULT_SHOP_ID = "dorak-demo";
@@ -186,6 +188,8 @@ export async function createTicket(shopId: string, customerName: string) {
       ticket_number: nextTicketNumber,
       customer_name: trimmedCustomerName,
       status: "waiting",
+      customer_ready: false,
+      customer_ready_at: null,
     })
     .select("*");
 
@@ -194,6 +198,24 @@ export async function createTicket(shopId: string, customerName: string) {
   }
 
   return insertedTickets[0] as Ticket;
+}
+
+export async function markCustomerReady(ticketId: string) {
+  const { data, error } = await supabase
+    .from("tickets")
+    .update({
+      customer_ready: true,
+      customer_ready_at: new Date().toISOString(),
+    })
+    .eq("id", ticketId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data as Ticket;
 }
 
 export async function cancelTicket(ticketId: string) {
@@ -226,6 +248,8 @@ export async function serveNextTicket(shopId: string) {
     .update({
       status: "served",
       served_at: new Date().toISOString(),
+      customer_ready: false,
+      customer_ready_at: null,
     })
     .eq("id", nextTicket.id)
     .select("*")

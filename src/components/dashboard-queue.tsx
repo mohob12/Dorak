@@ -3,9 +3,11 @@
 import {
   AlertTriangle,
   ArrowLeft,
+  BellRing,
   CheckCircle2,
   Home,
   LogOut,
+  MapPin,
   MonitorPlay,
   PlusCircle,
   Sparkles,
@@ -15,7 +17,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ShopQrCard } from "@/components/shop-qr-card";
 import { TicketPrintCard } from "@/components/ticket-print-card";
@@ -43,6 +45,12 @@ import {
 } from "@/lib/subscription-plans";
 import { supabase } from "@/integrations/supabase/client";
 
+type ReadyNotification = {
+  id: string;
+  customerName: string;
+  ticketNumber: number | null;
+};
+
 export function DashboardQueue() {
   const navigate = useNavigate();
   const { user, loading, signOut } = useSession();
@@ -56,6 +64,9 @@ export function DashboardQueue() {
   const [isPreparingDashboard, setIsPreparingDashboard] = useState(true);
   const [manualCustomerName, setManualCustomerName] = useState("");
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
+  const [readyNotification, setReadyNotification] =
+    useState<ReadyNotification | null>(null);
+  const seenReadySignals = useRef<Record<string, string>>({});
 
   const activePlan = useMemo(() => {
     return SUBSCRIPTION_PLANS.find(
@@ -150,7 +161,34 @@ export function DashboardQueue() {
           table: "tickets",
           filter: `shop_id=eq.${activeShopId}`,
         },
-        () => {
+        (payload) => {
+          const nextTicket = payload.new as QueueTicket | undefined;
+
+          if (
+            nextTicket?.customer_ready &&
+            nextTicket.customer_ready_at &&
+            seenReadySignals.current[nextTicket.id] !== nextTicket.customer_ready_at
+          ) {
+            seenReadySignals.current[nextTicket.id] = nextTicket.customer_ready_at;
+
+            setReadyNotification({
+              id: nextTicket.id,
+              customerName: nextTicket.customer_name || "زبون",
+              ticketNumber: nextTicket.ticket_number,
+            });
+
+            toast("تنبيه جديد", {
+              description: `${nextTicket.customer_name || "زبون"} أرسل: أنا قريب`,
+              duration: 6000,
+            });
+
+            window.setTimeout(() => {
+              setReadyNotification((current) =>
+                current?.id === nextTicket.id ? null : current
+              );
+            }, 6000);
+          }
+
           loadQueue(activeShopId, user.id);
         }
       )
@@ -324,6 +362,47 @@ export function DashboardQueue() {
       dir="rtl"
       className="min-h-screen bg-[#f6fbf8] px-4 py-5 text-slate-950 sm:px-6"
     >
+      {readyNotification ? (
+        <div className="fixed right-4 top-4 z-50 w-[min(92vw,360px)] animate-in slide-in-from-right-10 fade-in duration-500">
+          <div className="overflow-hidden rounded-[1.8rem] border border-sky-200 bg-white shadow-2xl shadow-sky-900/15">
+            <div className="bg-[#24348f] px-4 py-3 text-white">
+              <div className="flex items-center gap-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
+                  <BellRing className="h-5 w-5 text-[#ffd200]" />
+                </div>
+                <div>
+                  <p className="text-sm font-black">تنبيه من الزبون</p>
+                  <p className="text-xs text-white/80">إشعار فوري جديد</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 text-right">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-lg font-black text-slate-950">
+                    {readyNotification.customerName}
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-slate-500">
+                    رقم التذكرة: {readyNotification.ticketNumber ?? "—"}
+                  </p>
+                </div>
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-800">
+                  <MapPin className="h-6 w-6" />
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-[1.3rem] bg-amber-50 px-4 py-3 text-center">
+                <p className="text-lg font-black text-amber-900">أنا قريب</p>
+                <p className="mt-1 text-xs font-bold text-amber-800/80">
+                  الزبون قريب من المحل وهو قادم لدوره
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1fr_360px]">
         <section className="flex flex-col gap-5">
           <header className="rounded-[2rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15">
@@ -535,10 +614,18 @@ export function DashboardQueue() {
                             {ticketItem.ticket_number ?? "—"}
                           </div>
                           <div>
-                            <p className="font-black">
-                              {ticketItem.customer_name ||
-                                `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
-                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="font-black">
+                                {ticketItem.customer_name ||
+                                  `تذكرة رقم ${ticketItem.ticket_number ?? "—"}`}
+                              </p>
+                              {ticketItem.customer_ready ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 px-3 py-1 text-xs font-black text-sky-800">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  أنا قريب
+                                </span>
+                              ) : null}
+                            </div>
                             <p className="text-xs text-slate-500">
                               {ticketItem.status === "waiting" && waitingIndex === 0
                                 ? "الدور التالي"

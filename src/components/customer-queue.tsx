@@ -3,6 +3,7 @@
 import {
   Bell,
   Clock,
+  MapPin,
   RotateCcw,
   Sparkles,
   TicketCheck,
@@ -18,6 +19,7 @@ import {
   formatWaitTime,
   getTicket,
   getWaitingTickets,
+  markCustomerReady,
   type Shop,
   type Ticket,
   type TicketStatus,
@@ -33,6 +35,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [isBooking, setIsBooking] = useState(false);
+  const [isMarkingReady, setIsMarkingReady] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const [hasMissedTurn, setHasMissedTurn] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
@@ -169,6 +172,10 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
   const displayTicketNumber = currentTicket?.ticket_number ?? "—";
   const isServed = currentTicket?.status === "served";
+  const canMarkReady =
+    currentTicket?.status === "waiting" &&
+    !currentTicket.customer_ready &&
+    ticketPosition <= 2;
 
   const bookTicket = async () => {
     const trimmedName = customerName.trim();
@@ -192,10 +199,24 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       setHasMissedTurn(false);
       toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number ?? "—"}`);
       await loadQueue();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
     } finally {
       setIsBooking(false);
+    }
+  };
+
+  const handleMarkReady = async () => {
+    if (!currentTicket) {
+      return;
+    }
+
+    setIsMarkingReady(true);
+
+    try {
+      const updatedTicket = await markCustomerReady(currentTicket.id);
+      setCurrentTicket(updatedTicket);
+      toast.success("تم إرسال تنبيه لصاحب المحل بأنك قريب");
+    } finally {
+      setIsMarkingReady(false);
     }
   };
 
@@ -338,6 +359,31 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
                   </p>
                 </div>
               </div>
+
+              {currentTicket.status === "waiting" ? (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-[1.5rem] border border-sky-100 bg-sky-50 px-4 py-3">
+                  <div className="text-right">
+                    <p className="text-sm font-black text-sky-900">هل اقترب دورك؟</p>
+                    <p className="mt-1 text-xs leading-6 text-sky-800/80">
+                      إذا كنت قريبًا من المحل اضغط لإخبار صاحب المتجر.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleMarkReady}
+                    disabled={!canMarkReady || isMarkingReady}
+                    className="inline-flex shrink-0 items-center gap-2 rounded-full bg-sky-700 px-4 py-2 text-xs font-black text-white transition hover:bg-sky-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    <MapPin className="h-4 w-4" />
+                    {currentTicket.customer_ready
+                      ? "تم الإرسال"
+                      : isMarkingReady
+                        ? "جاري..."
+                        : "أنا قريب"}
+                  </button>
+                </div>
+              ) : null}
 
               <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-center text-sm leading-6 text-teal-800">
                 {hasMissedTurn
