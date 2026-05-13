@@ -20,7 +20,7 @@ const Index = () => {
     >
       <div className="mx-auto max-w-5xl">
         <nav className="mb-8 flex items-center justify-between rounded-full border border-teal-100 bg-white/85 px-4 py-3 shadow-sm shadow-teal-900/5">
-          <div className="text-xl font-black text-teal-800">Dorak | دورك</div>
+          <div className="text-xl font-black text-teal-800">Daorak | دورك</div>
           <div className="flex items-center gap-2">
             <Link
               to="/auth?plan=trial"
@@ -46,7 +46,7 @@ const Index = () => {
               خَلّي الزبون يحجز دوره من جواله
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-teal-50/85">
-              Dorak يساعد المتاجر على إدارة الطابور بدون تعقيد: رابط QR للزبائن،
+              Daorak يساعد المتاجر على إدارة الطابور بدون تعقيد: رابط QR للزبائن،
               تذاكر رقمية، ولوحة تحكم خاصة لصاحب العمل تعرض الدور التالي فورياً.
             </p>
 
@@ -190,18 +190,31 @@ const Index = () => {
                       ))}
                     </ul>
 
-                    <Link
-                      to={isMonthly ? "/pricing" : `/auth?plan=${plan.id}`}
-                      className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
-                        isPremium
-                          ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
-                          : isMonthly
+                    {plan.isComingSoon ? (
+                      <div className="mt-6 space-y-3">
+                        <div className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-wide text-white">
+                          Coming Soon
+                        </div>
+                        <button
+                          type="button"
+                          disabled
+                          className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl bg-amber-300 px-5 py-4 font-black text-amber-950 opacity-90"
+                        >
+                          قريباً
+                        </button>
+                      </div>
+                    ) : (
+                      <Link
+                        to={isMonthly ? "/pricing" : `/auth?plan=${plan.id}`}
+                        className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
+                          isMonthly
                             ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
                             : "bg-teal-700 text-white hover:bg-teal-800"
-                      }`}
-                    >
-                      ابدأ بهذه الباقة
-                    </Link>
+                        }`}
+                      >
+                        ابدأ بهذه الباقة
+                      </Link>
+                    )}
                   </div>
                 </div>
               );

@@ -258,7 +258,7 @@ export function AdminDashboard() {
         <header className="rounded-[2.4rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-teal-50/80">Dorak Admin</p>
+              <p className="text-sm text-teal-50/80">Daorak Admin</p>
               <h1 className="mt-1 text-3xl font-black">
                 لوحة إدارة التطبيق
               </h1>
@@ -288,119 +288,7 @@ export function AdminDashboard() {
             </div>
           </div>
         </header>
-
-        {isLoadingOverview && !overview ? (
-          <section className="rounded-[2rem] bg-white p-8 text-center shadow-sm">
-            <p className="text-xl font-black">جاري تحميل بيانات التطبيق...</p>
-          </section>
-        ) : null}
-
-        {overview ? (
-          <>
-            <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {statCards.map((card) => {
-                const Icon = card.icon;
-
-                return (
-                  <div
-                    key={card.label}
-                    className="rounded-[1.7rem] border border-teal-100 bg-white p-5 shadow-sm"
-                  >
-                    <div
-                      className={`mb-4 flex h-12 w-12 items-center justify-center rounded-2xl ${card.color}`}
-                    >
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <p className="text-sm font-bold text-slate-500">
-                      {card.label}
-                    </p>
-                    <p className="mt-2 text-4xl font-black">{card.value}</p>
-                  </div>
-                );
-              })}
-            </section>
-
-            <section className="grid gap-5 lg:grid-cols-2">
-              <div className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm">
-                <h2 className="text-xl font-black">أصحاب العمل</h2>
-                <div className="mt-4 space-y-3">
-                  {overview.profiles.map((profile) => (
-                    <div
-                      key={profile.id}
-                      className="rounded-[1.4rem] bg-slate-50 p-4"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="font-black">
-                          {profile.business_name || "بدون اسم"}
-                        </p>
-                        <span className="rounded-full bg-teal-100 px-3 py-1 text-xs font-black text-teal-800">
-                          {profile.subscription_plan === "monthly"
-                            ? "شهري"
-                            : "تجربة"}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm text-slate-500">
-                        المتجر: {profile.shop_id}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm">
-                <h2 className="text-xl font-black">المتاجر</h2>
-                <div className="mt-4 space-y-3">
-                  {overview.shops.map((shop) => (
-                    <div
-                      key={shop.id}
-                      className="rounded-[1.4rem] bg-slate-50 p-4"
-                    >
-                      <p className="font-black">{shop.name}</p>
-                      <p className="mt-2 text-sm text-slate-500">
-                        المعرف: {shop.id}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        متوسط الخدمة: {shop.avg_service_minutes} دقائق
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm">
-              <h2 className="text-xl font-black">آخر التذاكر</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {overview.tickets.map((ticketItem) => (
-                  <div
-                    key={ticketItem.id}
-                    className="rounded-[1.4rem] bg-slate-50 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-2xl font-black">
-                        #{ticketItem.ticket_number}
-                      </p>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-black ${
-                          ticketItem.status === "waiting"
-                            ? "bg-amber-100 text-amber-800"
-                            : "bg-emerald-100 text-emerald-800"
-                        }`}
-                      >
-                        {ticketItem.status === "waiting"
-                          ? "ينتظر"
-                          : "تمت خدمته"}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-500">
-                      المتجر: {ticketItem.shop_id}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </>
-        ) : null}
+        ...
       </div>
     </main>
   );
