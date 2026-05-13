@@ -26,8 +26,8 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "monthly",
     name: "الباقة الشهرية",
-    price: "$9 / شهر",
-    badge: "premium",
+    price: "$7 / شهر",
+    badge: "Basic",
     description: "باقة مناسبة للمتاجر التي تريد إدارة الطابور يومياً بسهولة.",
     features: [
       "استخدام مستمر بدون حد تجريبي",
