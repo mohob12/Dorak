@@ -2,6 +2,8 @@
 
 import {
   BriefcaseBusiness,
+  Eye,
+  EyeOff,
   LockKeyhole,
   Mail,
   ShieldCheck,
@@ -47,6 +49,7 @@ export function BusinessAuth() {
   const [businessName, setBusinessName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isPreparingAccount, setIsPreparingAccount] = useState(false);
   const [accountPrepared, setAccountPrepared] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
@@ -339,7 +342,9 @@ export function BusinessAuth() {
               </p>
             ) : null}
 
-            {selectedPlan === "monthly" && mode === "sign_up" && !hasPaidSignupApproval ? (
+            {selectedPlan === "monthly" &&
+            mode === "sign_up" &&
+            !hasPaidSignupApproval ? (
               <div className="mb-4 rounded-2xl bg-amber-50 px-4 py-4 text-sm font-bold leading-7 text-amber-900">
                 لإنشاء حساب الباقة الشهرية يجب إتمام الدفع أولاً، ثم ستعود هنا
                 تلقائياً لإكمال إنشاء الحساب.
@@ -401,7 +406,7 @@ export function BusinessAuth() {
                   <div className="flex items-center gap-2 rounded-2xl border border-teal-100 bg-white px-4 py-3 focus-within:border-teal-400">
                     <LockKeyhole className="h-5 w-5 text-teal-700" />
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
                       required
@@ -409,10 +414,29 @@ export function BusinessAuth() {
                       className="w-full bg-transparent text-right outline-none placeholder:text-slate-400"
                       placeholder="6 أحرف أو أكثر"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((current) => !current)}
+                      className="flex h-10 w-10 items-center justify-center rounded-xl text-teal-700 transition hover:bg-teal-50"
+                      aria-label={
+                        showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                      }
+                      title={
+                        showPassword ? "إخفاء كلمة المرور" : "إظهار كلمة المرور"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </label>
 
-                {mode === "sign_up" && selectedPlan === "monthly" && !hasPaidSignupApproval ? (
+                {mode === "sign_up" &&
+                selectedPlan === "monthly" &&
+                !hasPaidSignupApproval ? (
                   <Link
                     to="/pricing"
                     className="inline-flex w-full items-center justify-center rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
