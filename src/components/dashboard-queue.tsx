@@ -17,6 +17,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { DashboardNearbyNotice } from "@/components/dashboard-nearby-notice";
 import { ShopQrCard } from "@/components/shop-qr-card";
 import { TicketPrintCard } from "@/components/ticket-print-card";
 import { useSession } from "@/hooks/use-session";
@@ -28,6 +29,7 @@ import {
 import {
   DEFAULT_SHOP_ID,
   cleanShopId,
+  clearCustomerNear,
   createTicket,
   ensureShop,
   getTickets,
@@ -43,6 +45,12 @@ import {
 } from "@/lib/subscription-plans";
 import { supabase } from "@/integrations/supabase/client";
 
+type NearbyNotice = {
+  ticketId: string;
+  customerName: string;
+  ticketNumber: number | null;
+};
+
 export function DashboardQueue() {
   const navigate = useNavigate();
   const { user, loading, signOut } = useSession();
@@ -56,6 +64,7 @@ export function DashboardQueue() {
   const [isPreparingDashboard, setIsPreparingDashboard] = useState(true);
   const [manualCustomerName, setManualCustomerName] = useState("");
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
+  const [nearbyNotice, setNearbyNotice] = useState<NearbyNotice | null>(null);
 
   const activePlan = useMemo(() => {
     return SUBSCRIPTION_PLANS.find(
@@ -150,8 +159,33 @@ export function DashboardQueue() {
           table: "tickets",
           filter: `shop_id=eq.${activeShopId}`,
         },
-        () => {
-          loadQueue(activeShopId, user.id);
+        async (payload) => {
+          const nextTicket = payload.new as QueueTicket & {
+            customer_ready_at?: string | null;
+          };
+
+          if (nextTicket.customer_ready_at && nextTicket.status === "waiting") {
+            setNearbyNotice({
+              ticketId: nextTicket.id,
+              customerName: nextTicket.customer_name || "زبون",
+              ticketNumber: nextTicket.ticket_number,
+            });
+
+            toast("تنبيه جديد", {
+              description: `${nextTicket.customer_name || "زبون"} أرسل: أنا قريب`,
+              duration: 5000,
+            });
+
+            window.setTimeout(() => {
+              setNearbyNotice((current) =>
+                current?.ticketId === nextTicket.id ? null : current
+              );
+            }, 6500);
+
+            await clearCustomerNear(nextTicket.id);
+          }
+
+          await loadQueue(activeShopId, user.id);
         }
       )
       .subscribe();
@@ -324,6 +358,13 @@ export function DashboardQueue() {
       dir="rtl"
       className="min-h-screen bg-[#f6fbf8] px-4 py-5 text-slate-950 sm:px-6"
     >
+      {nearbyNotice ? (
+        <DashboardNearbyNotice
+          customerName={nearbyNotice.customerName}
+          ticketNumber={nearbyNotice.ticketNumber}
+        />
+      ) : null}
+
       <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1fr_360px]">
         <section className="flex flex-col gap-5">
           <header className="rounded-[2rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15">

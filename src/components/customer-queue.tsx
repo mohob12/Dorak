@@ -3,6 +3,7 @@
 import {
   Bell,
   Clock,
+  MapPin,
   RotateCcw,
   Sparkles,
   TicketCheck,
@@ -18,6 +19,7 @@ import {
   formatWaitTime,
   getTicket,
   getWaitingTickets,
+  markCustomerAsNear,
   type Shop,
   type Ticket,
   type TicketStatus,
@@ -33,6 +35,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [isBooking, setIsBooking] = useState(false);
+  const [isMarkingNear, setIsMarkingNear] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const [hasMissedTurn, setHasMissedTurn] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
@@ -169,6 +172,9 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
   const displayTicketNumber = currentTicket?.ticket_number ?? "—";
   const isServed = currentTicket?.status === "served";
+  const hasPressedNear = Boolean(currentTicket?.customer_ready_at);
+  const canMarkNear =
+    currentTicket?.status === "waiting" && ticketPosition <= 2 && !hasPressedNear;
 
   const bookTicket = async () => {
     const trimmedName = customerName.trim();
@@ -192,10 +198,25 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       setHasMissedTurn(false);
       toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number ?? "—"}`);
       await loadQueue();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
     } finally {
       setIsBooking(false);
+    }
+  };
+
+  const handleMarkNear = async () => {
+    if (!currentTicket) {
+      return;
+    }
+
+    setIsMarkingNear(true);
+
+    try {
+      const updatedTicket = await markCustomerAsNear(currentTicket.id);
+      setCurrentTicket(updatedTicket);
+      toast.success("تم إرسال تنبيه لصاحب المحل بأنك قريب");
+      await loadQueue();
+    } finally {
+      setIsMarkingNear(false);
     }
   };
 
@@ -339,14 +360,40 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
                 </div>
               </div>
 
+              {!isServed ? (
+                <div className="mt-4 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={handleMarkNear}
+                    disabled={!canMarkNear || isMarkingNear}
+                    className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-black transition ${
+                      hasPressedNear
+                        ? "bg-emerald-100 text-emerald-800"
+                        : canMarkNear
+                          ? "bg-[#24348f] text-white shadow-lg shadow-[#24348f]/20 hover:bg-[#1d2d7d]"
+                          : "bg-slate-100 text-slate-400"
+                    }`}
+                  >
+                    <MapPin className="h-4 w-4" />
+                    {hasPressedNear
+                      ? "تم إرسال: أنا قريب"
+                      : isMarkingNear
+                        ? "جاري الإرسال..."
+                        : "أنا قريب"}
+                  </button>
+                </div>
+              ) : null}
+
               <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-center text-sm leading-6 text-teal-800">
                 {hasMissedTurn
                   ? "مرّ أكثر من دقيقتين على دورك. يمكنك التسجيل مرة ثانية إذا أردت."
                   : isServed
                     ? "تم اجتياز دورك، ويمكنك الآن التسجيل مرة ثانية في الطابور إذا أردت."
-                    : ticketPosition <= 1
-                      ? "دورك قريب جداً، يرجى الاستعداد."
-                      : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
+                    : hasPressedNear
+                      ? "تم إشعار صاحب المحل بأنك قريب وفي الطريق."
+                      : ticketPosition <= 1
+                        ? "دورك قريب جداً، ويمكنك الضغط على زر أنا قريب لتنبيه صاحب المحل."
+                        : "هذه الصفحة تتحدث تلقائياً عند تغيّر الطابور."}
               </p>
 
               {isServed ? (
