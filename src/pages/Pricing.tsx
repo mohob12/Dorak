@@ -158,10 +158,15 @@ const Pricing = () => {
                   </a>
 
                   <Link
-                    to={`/auth?plan=${plan.id}`}
-                    className="mt-3 inline-flex w-full items-center justify-center rounded-2xl bg-white px-5 py-4 text-sm font-black text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                    to="/postal-payment"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl bg-[#2f3192] px-5 py-4 text-sm font-black text-white transition hover:bg-[#26297a]"
                   >
-                    الرجوع لإكمال التسجيل
+                    <img
+                      src="/algerie-poste-logo.png"
+                      alt="شعار بريد الجزائر"
+                      className="h-5 w-5 object-contain"
+                    />
+                    الدفع عبر بريد الجزائر
                   </Link>
                 </div>
               </section>

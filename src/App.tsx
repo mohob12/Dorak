@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import PostalPayment from "./pages/PostalPayment";
 import Pricing from "./pages/Pricing";
 import QueueDisplay from "./pages/QueueDisplay";
 import ShopQueue from "./pages/ShopQueue";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/login" element={<Auth />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/postal-payment" element={<PostalPayment />} />
             <Route path="/shop/:id" element={<ShopQueue />} />
             <Route path="/queue/:id" element={<ShopQueue />} />
             <Route path="/display/:id" element={<QueueDisplay />} />
