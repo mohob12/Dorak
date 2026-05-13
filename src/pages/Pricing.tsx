@@ -159,9 +159,9 @@ const Pricing = () => {
 
                   <Link
                     to="/postal-payment"
-                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#2f3192] bg-[#ffd200] px-5 py-4 text-sm font-black text-[#2f3192] shadow-lg shadow-yellow-500/20 transition hover:bg-[#f4c800] hover:shadow-yellow-500/30"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#1f2a7a] bg-[#24348f] px-5 py-4 text-sm font-black text-white shadow-lg shadow-[#24348f]/25 transition hover:bg-[#1d2d7d] hover:shadow-[#1d2d7d]/30"
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/90 shadow-sm">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/95 shadow-sm">
                       <img
                         src="/algerie-poste-logo.svg"
                         alt="شعار بريد الجزائر"
