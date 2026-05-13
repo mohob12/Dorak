@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { CustomerNearbyButton } from "@/components/customer-nearby-button";
 import { TurnAlert } from "@/components/turn-alert";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -19,7 +18,6 @@ import {
   formatWaitTime,
   getTicket,
   getWaitingTickets,
-  markCustomerNearby,
   type Shop,
   type Ticket,
   type TicketStatus,
@@ -35,7 +33,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [currentTicket, setCurrentTicket] = useState<Ticket | null>(null);
   const [customerName, setCustomerName] = useState("");
   const [isBooking, setIsBooking] = useState(false);
-  const [isSendingNearby, setIsSendingNearby] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const [hasMissedTurn, setHasMissedTurn] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
@@ -172,10 +169,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
   const displayTicketNumber = currentTicket?.ticket_number ?? "—";
   const isServed = currentTicket?.status === "served";
-  const canSendNearby =
-    !!currentTicket &&
-    currentTicket.status === "waiting" &&
-    ticketPosition <= 2;
 
   const bookTicket = async () => {
     const trimmedName = customerName.trim();
@@ -203,24 +196,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       toast.error(error instanceof Error ? error.message : "تعذر حجز الدور");
     } finally {
       setIsBooking(false);
-    }
-  };
-
-  const sendNearbyAlert = async () => {
-    if (!currentTicket || !canSendNearby || currentTicket.customer_nearby_at) {
-      return;
-    }
-
-    setIsSendingNearby(true);
-
-    try {
-      const updatedTicket = await markCustomerNearby(currentTicket.id);
-      setCurrentTicket(updatedTicket);
-      toast.success("تم إشعار صاحب المحل بأنك قريب");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "تعذر إرسال التنبيه");
-    } finally {
-      setIsSendingNearby(false);
     }
   };
 
@@ -363,16 +338,6 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
                   </p>
                 </div>
               </div>
-
-              {canSendNearby ? (
-                <div className="mt-4 flex items-center justify-center">
-                  <CustomerNearbyButton
-                    onClick={sendNearbyAlert}
-                    disabled={isSendingNearby}
-                    sent={!!currentTicket.customer_nearby_at}
-                  />
-                </div>
-              ) : null}
 
               <p className="mt-4 rounded-2xl bg-teal-50 px-4 py-3 text-center text-sm leading-6 text-teal-800">
                 {hasMissedTurn
