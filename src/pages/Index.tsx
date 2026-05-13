@@ -190,31 +190,18 @@ const Index = () => {
                       ))}
                     </ul>
 
-                    {plan.isComingSoon ? (
-                      <div className="mt-6 space-y-3">
-                        <div className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-wide text-white">
-                          Coming Soon
-                        </div>
-                        <button
-                          type="button"
-                          disabled
-                          className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl bg-amber-300 px-5 py-4 font-black text-amber-950 opacity-90"
-                        >
-                          قريباً
-                        </button>
-                      </div>
-                    ) : (
-                      <Link
-                        to={isMonthly ? "/pricing" : `/auth?plan=${plan.id}`}
-                        className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
-                          isMonthly
+                    <Link
+                      to={isMonthly ? "/pricing" : `/auth?plan=${plan.id}`}
+                      className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
+                        isPremium
+                          ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                          : isMonthly
                             ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
                             : "bg-teal-700 text-white hover:bg-teal-800"
-                        }`}
-                      >
-                        ابدأ بهذه الباقة
-                      </Link>
-                    )}
+                      }`}
+                    >
+                      ابدأ بهذه الباقة
+                    </Link>
                   </div>
                 </div>
               );
