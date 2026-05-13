@@ -15,8 +15,9 @@ import {
   XCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { NearbyNotificationToast } from "@/components/nearby-notification-toast";
 import { ShopQrCard } from "@/components/shop-qr-card";
 import { TicketPrintCard } from "@/components/ticket-print-card";
 import { useSession } from "@/hooks/use-session";
@@ -56,6 +57,8 @@ export function DashboardQueue() {
   const [isPreparingDashboard, setIsPreparingDashboard] = useState(true);
   const [manualCustomerName, setManualCustomerName] = useState("");
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
+  const [nearbyNotification, setNearbyNotification] = useState<QueueTicket | null>(null);
+  const seenNearbyTicketIds = useRef<Record<string, string | null>>({});
 
   const activePlan = useMemo(() => {
     return SUBSCRIPTION_PLANS.find(
@@ -89,6 +92,23 @@ export function DashboardQueue() {
     setShop(loadedShop);
     setTickets(loadedTickets);
     setWaitingTickets(loadedWaitingTickets);
+
+    loadedTickets.forEach((ticket) => {
+      const knownValue = seenNearbyTicketIds.current[ticket.id];
+
+      if (!knownValue && ticket.customer_nearby_at) {
+        seenNearbyTicketIds.current[ticket.id] = ticket.customer_nearby_at;
+        setNearbyNotification(ticket);
+      } else if (!knownValue) {
+        seenNearbyTicketIds.current[ticket.id] = null;
+      } else if (
+        ticket.customer_nearby_at &&
+        knownValue !== ticket.customer_nearby_at
+      ) {
+        seenNearbyTicketIds.current[ticket.id] = ticket.customer_nearby_at;
+        setNearbyNotification(ticket);
+      }
+    });
   };
 
   useEffect(() => {
@@ -134,6 +154,20 @@ export function DashboardQueue() {
       });
     }
   }, [trialEndingSoon]);
+
+  useEffect(() => {
+    if (!nearbyNotification) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setNearbyNotification(null);
+    }, 6000);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [nearbyNotification]);
 
   useEffect(() => {
     if (!user || !activeShopId || trialExpired) {
@@ -324,6 +358,15 @@ export function DashboardQueue() {
       dir="rtl"
       className="min-h-screen bg-[#f6fbf8] px-4 py-5 text-slate-950 sm:px-6"
     >
+      {nearbyNotification ? (
+        <div className="fixed right-4 top-4 z-50 w-[calc(100%-2rem)] max-w-sm animate-in slide-in-from-right-10 fade-in duration-500">
+          <NearbyNotificationToast
+            customerName={nearbyNotification.customer_name || "زبون"}
+            ticketNumber={nearbyNotification.ticket_number}
+          />
+        </div>
+      ) : null}
+
       <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[1fr_360px]">
         <section className="flex flex-col gap-5">
           <header className="rounded-[2rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15">
@@ -552,6 +595,13 @@ export function DashboardQueue() {
                         </div>
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                          {ticketItem.customer_nearby_at &&
+                          ticketItem.status === "waiting" ? (
+                            <span className="inline-flex w-fit items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
+                              أنا قريب
+                            </span>
+                          ) : null}
+
                           <span
                             className={`inline-flex w-fit items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${getStatusClasses(
                               ticketItem.status
