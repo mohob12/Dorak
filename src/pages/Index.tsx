@@ -158,6 +158,11 @@ const Index = () => {
                     </div>
 
                     <h3 className="text-2xl font-black">{plan.name}</h3>
+                    {isMonthly ? (
+                      <p className="mt-1 text-xs font-bold text-amber-700">
+                        الأكثر استخداماً
+                      </p>
+                    ) : null}
                     <p
                       className={`mt-2 text-4xl font-black ${
                         isPremium ? "text-amber-700" : "text-teal-800"
