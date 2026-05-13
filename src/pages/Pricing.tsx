@@ -43,8 +43,8 @@ const Pricing = () => {
             </h1>
 
             <p className="mt-5 max-w-2xl text-base leading-8 text-teal-50/85">
-              اختر الباقة الشهرية ثم أكمل الدفع عبر PayPal. بعد الدفع يمكنك
-              العودة لإنشاء الحساب أو متابعة تفعيل اشتراكك الشهري.
+              اختر الباقة الشهرية ثم أكمل الدفع. بعد الدفع يمكنك العودة لإنشاء
+              الحساب أو متابعة تفعيل اشتراكك الشهري.
             </p>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -52,7 +52,7 @@ const Pricing = () => {
                 <Sparkles className="mb-3 h-6 w-6 text-amber-300" />
                 <p className="font-black">دفع مباشر</p>
                 <p className="mt-1 text-sm text-teal-50/80">
-                  عبر رابط PayPal
+                  إتمام سريع للطلب
                 </p>
               </div>
 
@@ -76,7 +76,7 @@ const Pricing = () => {
 
           <section className="rounded-[2.4rem] border border-amber-200 bg-white p-6 shadow-sm shadow-teal-900/5 sm:p-8">
             <div className="mb-4 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-black text-amber-800">
-              الباقة المدفوعة
+              Basic
             </div>
 
             <h2 className="text-3xl font-black">
@@ -84,7 +84,7 @@ const Pricing = () => {
             </h2>
 
             <p className="mt-3 text-5xl font-black text-teal-800">
-              {monthlyPlan?.price || "$9 / شهر"}
+              {monthlyPlan?.price || "$7 / شهر"}
             </p>
 
             <p className="mt-4 text-sm leading-7 text-slate-600">
@@ -105,12 +105,10 @@ const Pricing = () => {
             </ul>
 
             <div className="mt-8 rounded-[1.7rem] bg-slate-50 p-5">
-              <p className="text-sm font-black text-slate-800">
-                الدفع للباقة الشهرية
-              </p>
+              <p className="text-sm font-black text-slate-800">الدفع للاشتراك الشهري</p>
               <p className="mt-2 text-sm leading-7 text-slate-600">
-                اضغط على الزر التالي لإتمام الدفع عبر PayPal، ثم ارجع إلى التطبيق
-                لإكمال استخدام الباقة الشهرية.
+                اضغط على الزر التالي لإتمام الدفع، ثم ارجع إلى التطبيق لإكمال
+                استخدام الباقة الشهرية.
               </p>
 
               <a
@@ -120,7 +118,7 @@ const Pricing = () => {
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-4 font-black text-slate-950 transition hover:bg-amber-400"
               >
                 <CreditCard className="h-5 w-5" />
-                الدفع عبر PayPal
+                إتمام الدفع
               </a>
             </div>
           </section>
