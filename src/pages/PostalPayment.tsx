@@ -36,9 +36,9 @@ const PostalPayment = () => {
                 </p>
               </div>
 
-              <div className="flex h-20 w-20 items-center justify-center rounded-[1.8rem] bg-white/15 ring-1 ring-white/20">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[1.8rem] bg-white ring-1 ring-white/20">
                 <img
-                  src="/algerie-poste-logo.png"
+                  src="/algerie-poste-logo.svg"
                   alt="شعار بريد الجزائر"
                   className="h-14 w-14 object-contain"
                 />
