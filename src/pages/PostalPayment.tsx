@@ -1,7 +1,7 @@
 import { ArrowLeft, CreditCard, MessageCircle, QrCode, Store } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const WHATSAPP_URL = "https://wa.me/0784329316";
+const WHATSAPP_URL = "https://wa.me/213672786604";
 
 const PostalPayment = () => {
   return (
