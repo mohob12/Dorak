@@ -25,7 +25,8 @@ type AuthAction = AuthMode | null;
 
 const isSubscriptionPlan = (
   value: string | null
-): value is SubscriptionPlanId => value === "trial" || value === "monthly";
+): value is SubscriptionPlanId =>
+  value === "trial" || value === "monthly" || value === "premium";
 
 const getAuthMessage = (message: string) => {
   if (message.includes("User already registered")) {
@@ -54,6 +55,9 @@ export function BusinessAuth() {
   const [accountPrepared, setAccountPrepared] = useState(false);
   const [formMessage, setFormMessage] = useState<string | null>(null);
 
+  const requiresPayment =
+    selectedPlan === "monthly" || selectedPlan === "premium";
+
   const hasPaidSignupApproval =
     typeof window !== "undefined" &&
     window.localStorage.getItem(PAID_SIGNUP_APPROVED_KEY) === "true";
@@ -65,7 +69,7 @@ export function BusinessAuth() {
 
     if (paidApproved) {
       window.localStorage.setItem(PAID_SIGNUP_APPROVED_KEY, "true");
-      setFormMessage("تم تأكيد الدفع. يمكنك الآن إنشاء حساب الباقة الشهرية.");
+      setFormMessage("تم تأكيد الدفع. يمكنك الآن إنشاء حساب الباقة المدفوعة.");
     }
 
     if (isSubscriptionPlan(planFromUrl)) {
@@ -106,7 +110,7 @@ export function BusinessAuth() {
       })
       .then(() => {
         setAccountPrepared(true);
-        if (selectedPlan === "monthly") {
+        if (requiresPayment) {
           window.localStorage.removeItem(PAID_SIGNUP_APPROVED_KEY);
         }
         toast.success("تم تجهيز لوحة التحكم الخاصة بك");
@@ -123,6 +127,7 @@ export function BusinessAuth() {
     lastAuthAction,
     loading,
     navigate,
+    requiresPayment,
     selectedPlan,
     session?.user,
   ]);
@@ -143,9 +148,9 @@ export function BusinessAuth() {
     setIsPreparingAccount(true);
 
     if (mode === "sign_up") {
-      if (selectedPlan === "monthly" && !hasPaidSignupApproval) {
+      if (requiresPayment && !hasPaidSignupApproval) {
         setIsPreparingAccount(false);
-        toast.error("يجب إتمام الدفع أولاً قبل إنشاء حساب الباقة الشهرية");
+        toast.error("يجب إتمام الدفع أولاً قبل إنشاء حساب هذه الباقة");
         navigate("/pricing", { replace: false });
         return;
       }
@@ -195,7 +200,7 @@ export function BusinessAuth() {
         .then(() => updateOwnerPlan(data.session.user.id, selectedPlan))
         .then(() => {
           setAccountPrepared(true);
-          if (selectedPlan === "monthly") {
+          if (requiresPayment) {
             window.localStorage.removeItem(PAID_SIGNUP_APPROVED_KEY);
           }
           toast.success("تم إنشاء الحساب وتجهيز لوحة التحكم");
@@ -267,7 +272,7 @@ export function BusinessAuth() {
 
           <p className="text-base leading-8 text-teal-50/85">
             اختر الباقة المناسبة، ثم أنشئ حساب صاحب العمل بالبريد وكلمة المرور.
-            في الباقة الشهرية يجب إتمام الدفع أولاً قبل السماح بإنشاء الحساب.
+            في الباقات المدفوعة يجب إتمام الدفع أولاً قبل السماح بإنشاء الحساب.
           </p>
 
           <div className="mt-8 rounded-[1.7rem] bg-white/12 p-5 ring-1 ring-white/15">
@@ -277,7 +282,7 @@ export function BusinessAuth() {
             </div>
             <p className="mt-2 text-sm leading-7 text-teal-50/80">
               تسجيل الدخول مخصص فقط للحسابات الموجودة مسبقاً، أما إنشاء الحساب
-              الجديد للباقة المدفوعة فيتطلب الدفع أولاً.
+              الجديد للباقات المدفوعة فيتطلب الدفع أولاً.
             </p>
           </div>
 
@@ -342,11 +347,9 @@ export function BusinessAuth() {
               </p>
             ) : null}
 
-            {selectedPlan === "monthly" &&
-            mode === "sign_up" &&
-            !hasPaidSignupApproval ? (
+            {requiresPayment && mode === "sign_up" && !hasPaidSignupApproval ? (
               <div className="mb-4 rounded-2xl bg-amber-50 px-4 py-4 text-sm font-bold leading-7 text-amber-900">
-                لإنشاء حساب الباقة الشهرية يجب إتمام الدفع أولاً، ثم ستعود هنا
+                لإنشاء حساب هذه الباقة يجب إتمام الدفع أولاً، ثم ستعود هنا
                 تلقائياً لإكمال إنشاء الحساب.
               </div>
             ) : null}
@@ -434,9 +437,7 @@ export function BusinessAuth() {
                   </div>
                 </label>
 
-                {mode === "sign_up" &&
-                selectedPlan === "monthly" &&
-                !hasPaidSignupApproval ? (
+                {mode === "sign_up" && requiresPayment && !hasPaidSignupApproval ? (
                   <Link
                     to="/pricing"
                     className="inline-flex w-full items-center justify-center rounded-3xl bg-amber-500 px-5 py-4 text-lg font-black text-slate-950 shadow-lg shadow-amber-500/25 transition hover:bg-amber-400"
