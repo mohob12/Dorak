@@ -3,6 +3,7 @@ import {
   ArrowLeft,
   BriefcaseBusiness,
   CheckCircle2,
+  Crown,
   LayoutDashboard,
   QrCode,
   Smartphone,
@@ -114,51 +115,105 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            {SUBSCRIPTION_PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className={`rounded-[2rem] border p-6 ${
-                  plan.id === "monthly"
-                    ? "border-amber-200 bg-amber-50"
-                    : "border-teal-100 bg-teal-50"
-                }`}
-              >
-                <div className="mb-4 inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-teal-800">
-                  {plan.badge}
-                </div>
-                <h3 className="text-2xl font-black">{plan.name}</h3>
-                <p className="mt-2 text-4xl font-black text-teal-800">
-                  {plan.price}
-                </p>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  {plan.description}
-                </p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {SUBSCRIPTION_PLANS.map((plan) => {
+              const isMonthly = plan.id === "monthly";
+              const isPremium = plan.id === "premium";
 
-                <ul className="mt-5 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-2 text-sm font-bold text-slate-700"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-teal-700" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to={plan.id === "monthly" ? "/pricing" : `/auth?plan=${plan.id}`}
-                  className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
-                    plan.id === "monthly"
-                      ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
-                      : "bg-teal-700 text-white hover:bg-teal-800"
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative overflow-hidden rounded-[2rem] border p-6 ${
+                    isPremium
+                      ? "border-amber-300 bg-[#fff8e8] shadow-lg shadow-amber-500/15"
+                      : isMonthly
+                        ? "border-amber-200 bg-amber-50"
+                        : "border-teal-100 bg-teal-50"
                   }`}
                 >
-                  ابدأ بهذه الباقة
-                </Link>
-              </div>
-            ))}
+                  {isPremium ? (
+                    <>
+                      <div className="absolute -left-10 -top-10 h-28 w-28 rounded-full bg-amber-200/50" />
+                      <div className="absolute -bottom-12 -right-8 h-32 w-32 rounded-full bg-yellow-200/40" />
+                    </>
+                  ) : null}
+
+                  <div className="relative">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
+                          isPremium
+                            ? "bg-amber-200 text-amber-950"
+                            : "bg-white text-teal-800"
+                        }`}
+                      >
+                        {plan.badge}
+                      </div>
+
+                      {isPremium ? (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-400 text-amber-950 shadow-sm">
+                          <Crown className="h-5 w-5" />
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <h3 className="text-2xl font-black">{plan.name}</h3>
+                    <p
+                      className={`mt-2 text-4xl font-black ${
+                        isPremium ? "text-amber-700" : "text-teal-800"
+                      }`}
+                    >
+                      {plan.price}
+                    </p>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">
+                      {plan.description}
+                    </p>
+
+                    <ul className="mt-5 space-y-3">
+                      {plan.features.map((feature) => (
+                        <li
+                          key={feature}
+                          className="flex items-center gap-2 text-sm font-bold text-slate-700"
+                        >
+                          <CheckCircle2
+                            className={`h-4 w-4 ${
+                              isPremium ? "text-amber-700" : "text-teal-700"
+                            }`}
+                          />
+                          <span>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {plan.isComingSoon ? (
+                      <div className="mt-6 space-y-3">
+                        <div className="inline-flex rounded-full bg-slate-900 px-4 py-2 text-xs font-black uppercase tracking-wide text-white">
+                          Coming Soon
+                        </div>
+                        <button
+                          type="button"
+                          disabled
+                          className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-2xl bg-amber-300 px-5 py-4 font-black text-amber-950 opacity-90"
+                        >
+                          قريباً
+                        </button>
+                      </div>
+                    ) : (
+                      <Link
+                        to={isMonthly ? "/pricing" : `/auth?plan=${plan.id}`}
+                        className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
+                          isMonthly
+                            ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                            : "bg-teal-700 text-white hover:bg-teal-800"
+                        }`}
+                      >
+                        ابدأ بهذه الباقة
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       </div>

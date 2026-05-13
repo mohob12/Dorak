@@ -1,4 +1,4 @@
-export type SubscriptionPlanId = "trial" | "monthly";
+export type SubscriptionPlanId = "trial" | "monthly" | "premium";
 
 export type SubscriptionPlan = {
   id: SubscriptionPlanId;
@@ -7,6 +7,7 @@ export type SubscriptionPlan = {
   badge: string;
   description: string;
   features: string[];
+  isComingSoon?: boolean;
 };
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
@@ -35,6 +36,23 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
       "تحديث فوري للطابور",
       "مناسبة للمتاجر الصغيرة والمتوسطة",
     ],
+  },
+  {
+    id: "premium",
+    name: "الباقة الذهبية",
+    price: "قريباً",
+    badge: "Premium",
+    description:
+      "باقة متقدمة للمتاجر التي تريد أدوات أوسع وتحكماً أكبر وقراءة أوضح لأداء الطوابير.",
+    features: [
+      "لوحة تحكم متقدمة",
+      "قسم تحليل البيانات والنتائج",
+      "إمكانية تخصيص الطوابير",
+      "إمكانية إلغاء الأدوار من الطابور",
+      "خيارات أكثر لإدارة المتجر",
+      "مناسبة للأعمال التي تحتاج تحكمًا أوسع",
+    ],
+    isComingSoon: true,
   },
 ];
 
