@@ -22,6 +22,7 @@ export function TicketPrintCard({
     waitingUrl
   )}`;
   const estimatedWait = formatWaitTime(peopleAhead * avgServiceMinutes);
+  const showQr = ticket.source !== "manual";
 
   const printTicket = () => {
     const printWindow = window.open("", "_blank", "width=720,height=900");
@@ -153,6 +154,9 @@ export function TicketPrintCard({
               </div>
             </div>
 
+            ${
+              showQr
+                ? `
             <div class="qr-wrap">
               <div style="font-weight:800; margin-bottom:12px; color:#0f766e;">
                 QR لصفحة الانتظار
@@ -164,6 +168,13 @@ export function TicketPrintCard({
             <div class="footer">
               امسح رمز QR للدخول مباشرة إلى صفحة الانتظار ومتابعة حالة الدور.
             </div>
+            `
+                : `
+            <div class="footer">
+              هذه التذكرة أضيفت يدوياً من لوحة التحكم لذلك لا تحتوي على رمز QR.
+            </div>
+            `
+            }
           </div>
 
           <script>
@@ -194,10 +205,12 @@ export function TicketPrintCard({
         <Clock3 className="h-3.5 w-3.5" />
         {estimatedWait}
       </span>
-      <span className="hidden items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700 xl:inline-flex">
-        <QrCode className="h-3.5 w-3.5" />
-        QR
-      </span>
+      {showQr ? (
+        <span className="hidden items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-xs font-bold text-slate-700 xl:inline-flex">
+          <QrCode className="h-3.5 w-3.5" />
+          QR
+        </span>
+      ) : null}
     </button>
   );
 }

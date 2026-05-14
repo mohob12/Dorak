@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export type TicketStatus = "waiting" | "served" | "cancelled";
+export type TicketSource = "customer" | "manual";
 
 export type Shop = {
   id: string;
@@ -18,6 +19,7 @@ export type Ticket = {
   status: TicketStatus;
   created_at: string;
   served_at: string | null;
+  source?: TicketSource | null;
 };
 
 export const DEFAULT_SHOP_ID = "dorak-demo";
@@ -167,7 +169,11 @@ async function getNextTicketNumber(shopId: string) {
   return latestTicketNumber + 1;
 }
 
-export async function createTicket(shopId: string, customerName: string) {
+export async function createTicket(
+  shopId: string,
+  customerName: string,
+  source: TicketSource = "customer"
+) {
   const normalizedShopId = cleanShopId(shopId) || DEFAULT_SHOP_ID;
   const trimmedCustomerName = customerName.trim();
 
@@ -186,6 +192,7 @@ export async function createTicket(shopId: string, customerName: string) {
       ticket_number: nextTicketNumber,
       customer_name: trimmedCustomerName,
       status: "waiting",
+      source,
     })
     .select("*");
 

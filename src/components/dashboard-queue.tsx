@@ -199,7 +199,7 @@ export function DashboardQueue() {
     setIsAddingCustomer(true);
 
     try {
-      const ticket = await createTicket(activeShopId, trimmedName);
+      const ticket = await createTicket(activeShopId, trimmedName, "manual");
       setManualCustomerName("");
       toast.success(
         `تمت إضافة ${trimmedName} إلى الطابور برقم ${ticket.ticket_number ?? "—"}`
