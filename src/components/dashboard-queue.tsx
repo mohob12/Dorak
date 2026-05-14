@@ -523,10 +523,17 @@ export function DashboardQueue() {
                     (waitingTicket) => waitingTicket.id === ticketItem.id
                   );
 
+                  const isNextTurn =
+                    ticketItem.status === "waiting" && waitingIndex === 0;
+
                   return (
                     <div
                       key={ticketItem.id}
-                      className="rounded-[1.4rem] border border-slate-100 bg-slate-50 px-4 py-4"
+                      className={`rounded-[1.4rem] bg-slate-50 px-4 py-4 ${
+                        isNextTurn
+                          ? "border border-emerald-300"
+                          : "border border-slate-100"
+                      }`}
                     >
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                         <div className="flex items-center gap-3">
