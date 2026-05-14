@@ -103,16 +103,16 @@ const Index = () => {
         </section>
 
         <section className="mt-8 rounded-[2.4rem] border border-teal-100 bg-white/90 p-5 shadow-sm shadow-teal-900/5 sm:p-7">
-          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-5 flex flex-col gap-2">
             <div>
               <p className="text-sm font-black text-teal-700">باقات الاشتراك</p>
               <h2 className="mt-1 text-3xl font-black">
-                اختر خطة بسيطة بسعر واضح
+                اختر الخطة الانسب لعملك
               </h2>
+              <p className="mt-2 text-sm font-bold text-slate-500">
+                اختر خطتك لخدمة أسرع و تنظيم أذكى
+              </p>
             </div>
-            <p className="text-sm font-bold text-slate-500">
-              التسعير بالدولار — مع تجربة مجانية 3 أيام
-            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
