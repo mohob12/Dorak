@@ -63,6 +63,14 @@ export function DashboardQueue() {
     );
   }, [profile?.subscription_plan]);
 
+  const displayedTickets = useMemo(() => {
+    return [...tickets].sort((a, b) => {
+      const aTime = new Date(a.created_at).getTime();
+      const bTime = new Date(b.created_at).getTime();
+      return bTime - aTime;
+    });
+  }, [tickets]);
+
   const plansPageLink = "/pricing";
   const upgradePlanLabel =
     profile?.subscription_plan === "trial" ? "الترقية الآن" : "عرض الباقة المدفوعة";
@@ -193,7 +201,9 @@ export function DashboardQueue() {
     try {
       const ticket = await createTicket(activeShopId, trimmedName);
       setManualCustomerName("");
-      toast.success(`تمت إضافة ${trimmedName} إلى الطابور برقم ${ticket.ticket_number ?? "—"}`);
+      toast.success(
+        `تمت إضافة ${trimmedName} إلى الطابور برقم ${ticket.ticket_number ?? "—"}`
+      );
       await loadQueue(activeShopId, user.id);
     } finally {
       setIsAddingCustomer(false);
@@ -509,9 +519,9 @@ export function DashboardQueue() {
               <Store className="h-7 w-7 text-teal-700" />
             </div>
 
-            {tickets.length > 0 ? (
+            {displayedTickets.length > 0 ? (
               <div className="space-y-3">
-                {tickets.map((ticketItem) => {
+                {displayedTickets.map((ticketItem) => {
                   const waitingIndex = waitingTickets.findIndex(
                     (waitingTicket) => waitingTicket.id === ticketItem.id
                   );
