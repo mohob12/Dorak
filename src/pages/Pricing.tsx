@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
 
 const PAYPAL_MONTHLY_PAYMENT_URL =
-  "https://www.paypal.com/ncp/payment/FEXVQSYBCUUXS";
+  "https://www.paypal.com/ncp/payment/45DEYVZCEW2AA";
 const PAYPAL_PREMIUM_PAYMENT_URL =
   "https://www.paypal.com/ncp/payment/FEXVQSYBCUUXS";
 
