@@ -511,10 +511,7 @@ export function DashboardQueue() {
           <section className="rounded-[2rem] border border-teal-100 bg-white p-5 shadow-sm shadow-teal-900/5">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-xl font-black">حالات الأدوار</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  يعرض حالة كل تذكرة: ينتظر، تمت خدمته، أو ملغي.
-                </p>
+                <h2 className="text-xl font-black">قائمة الانتضار</h2>
               </div>
               <Store className="h-7 w-7 text-teal-700" />
             </div>
