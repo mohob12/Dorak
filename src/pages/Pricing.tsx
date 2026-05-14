@@ -7,6 +7,8 @@ const PAYPAL_MONTHLY_PAYMENT_URL =
 const PAYPAL_PREMIUM_PAYMENT_URL =
   "https://www.paypal.com/ncp/payment/FEXVQSYBCUUXS";
 
+const getSignupLink = (planId: string) => `/auth?plan=${planId}&paid=success`;
+
 const Pricing = () => {
   const paidPlans = SUBSCRIPTION_PLANS.filter(
     (plan) => plan.id === "monthly" || plan.id === "premium"
@@ -47,7 +49,7 @@ const Pricing = () => {
 
           <p className="mt-5 max-w-3xl text-base leading-8 text-teal-50/85">
             الباقات المدفوعة في Dorak تتطلب إتمام الدفع أولاً قبل السماح بإنشاء
-            حساب جديد. بعد الدفع يمكنك الرجوع لإكمال التسجيل في الباقة التي اخترتها.
+            حساب جديد. بعد الدفع يمكنك العودة مباشرة إلى صفحة التسجيل للباقة نفسها.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -84,6 +86,7 @@ const Pricing = () => {
               plan.id === "premium"
                 ? PAYPAL_PREMIUM_PAYMENT_URL
                 : PAYPAL_MONTHLY_PAYMENT_URL;
+            const returnUrl = getSignupLink(plan.id);
 
             return (
               <section
@@ -139,8 +142,8 @@ const Pricing = () => {
                     الدفع لـ {plan.name}
                   </p>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    اضغط على الزر التالي لإتمام الدفع أولاً، ثم ارجع إلى التطبيق
-                    وأنشئ حسابك في هذه الباقة.
+                    اضغط على الزر التالي لإتمام الدفع أولاً، ثم ستعود مباشرة إلى
+                    صفحة التسجيل الخاصة بهذه الباقة.
                   </p>
 
                   <a
@@ -156,6 +159,13 @@ const Pricing = () => {
                     <CreditCard className="h-5 w-5" />
                     إتمام الدفع
                   </a>
+
+                  <Link
+                    to={returnUrl}
+                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#1f2a7a] bg-[#24348f] px-5 py-4 text-sm font-black text-white shadow-lg shadow-[#24348f]/25 transition hover:bg-[#1d2d7d] hover:shadow-[#1d2d7d]/30"
+                  >
+                    العودة إلى التسجيل بعد الدفع
+                  </Link>
 
                   <Link
                     to="/postal-payment"

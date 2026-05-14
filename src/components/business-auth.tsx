@@ -254,7 +254,7 @@ export function BusinessAuth() {
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6"
+      className="min-h-screen bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6 sm:py-8"
     >
       <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
         <section className="rounded-[2.4rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15 sm:p-8">
