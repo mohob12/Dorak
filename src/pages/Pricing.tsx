@@ -118,12 +118,12 @@ const Pricing = () => {
 
                 <div className="relative">
                   {isPremium ? (
-                    <div className="mb-6 flex flex-col items-start gap-3">
-                      <div className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white shadow-lg">
+                    <div className="mb-6 flex flex-col items-end gap-3 text-left">
+                      <div className="inline-flex items-center gap-2 self-end rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white shadow-lg">
                         <Crown className="h-4 w-4 text-amber-300" />
                         أفضل باقة
                       </div>
-                      <div className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
+                      <div className="flex h-16 w-16 items-center justify-center self-end rounded-[1.4rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
                         <Crown className="h-8 w-8" />
                       </div>
                     </div>
