@@ -1,6 +1,8 @@
-import { CheckCircle2, CreditCard, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, CreditCard, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
+
+const WHATSAPP_URL = "https://wa.me/213672786604";
 
 const getPaypalPaymentUrl = (baseUrl: string, planId: string) => {
   const returnUrl = encodeURIComponent(
@@ -158,19 +160,15 @@ const Pricing = () => {
                     إتمام الدفع
                   </a>
 
-                  <Link
-                    to="/postal-payment"
-                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#1f2a7a] bg-[#24348f] px-5 py-4 text-sm font-black text-white shadow-lg shadow-[#24348f]/25 transition hover:bg-[#1d2d7d] hover:shadow-[#1d2d7d]/30"
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#1e8f5a] bg-[#25D366] px-5 py-4 text-sm font-black text-white shadow-lg shadow-[#25D366]/25 transition hover:bg-[#1fb659] hover:shadow-[#1fb659]/30"
                   >
-                    <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/95 shadow-sm">
-                      <img
-                        src="/algerie-poste-logo.svg"
-                        alt="شعار بريد الجزائر"
-                        className="h-7 w-7 object-contain"
-                      />
-                    </span>
-                    الدفع عبر بريد الجزائر
-                  </Link>
+                    <MessageCircle className="h-5 w-5" />
+                    او تواصل معنا لتسجيل الإشتراك
+                  </a>
                 </div>
               </section>
             );
