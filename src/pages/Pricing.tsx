@@ -113,22 +113,19 @@ const Pricing = () => {
                   <>
                     <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-200/50 blur-2xl" />
                     <div className="absolute -bottom-12 -left-10 h-44 w-44 rounded-full bg-yellow-200/45 blur-2xl" />
+                    <div className="pointer-events-none absolute left-6 top-6 flex flex-col items-start gap-3 text-left sm:left-8 sm:top-8">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white shadow-lg">
+                        <Crown className="h-4 w-4 text-amber-300" />
+                        أفضل باقة
+                      </div>
+                      <div className="flex h-16 w-16 items-center justify-center rounded-[1.4rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
+                        <Crown className="h-8 w-8" />
+                      </div>
+                    </div>
                   </>
                 ) : null}
 
                 <div className="relative">
-                  {isPremium ? (
-                    <div className="mb-6 flex flex-col items-end gap-3 text-left">
-                      <div className="inline-flex items-center gap-2 self-end rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white shadow-lg">
-                        <Crown className="h-4 w-4 text-amber-300" />
-                        أفضل باقة
-                      </div>
-                      <div className="flex h-16 w-16 items-center justify-center self-end rounded-[1.4rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
-                        <Crown className="h-8 w-8" />
-                      </div>
-                    </div>
-                  ) : null}
-
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
