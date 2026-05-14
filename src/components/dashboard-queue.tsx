@@ -473,7 +473,7 @@ export function DashboardQueue() {
 
             <div className="rounded-[1.6rem] border border-amber-100 bg-amber-50 p-5 shadow-sm">
               <Ticket className="mb-4 h-6 w-6 text-amber-700" />
-              <p className="text-sm font-bold text-slate-500">الدور الحالي</p>
+              <p className="text-sm font-bold text-slate-500">الدور التالي</p>
               <p className="mt-2 text-4xl font-black">{nextTicketNumber}</p>
             </div>
 
