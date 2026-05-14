@@ -96,7 +96,7 @@ const Pricing = () => {
             const isPremium = plan.id === "premium";
             const paymentBaseUrl =
               plan.id === "premium"
-                ? "https://www.paypal.com/ncp/payment/FEXVQSYBCUUXS"
+                ? "https://www.paypal.com/ncp/payment/ZYJZ2VQ3JXRA2"
                 : "https://www.paypal.com/ncp/payment/45DEYVZCEW2AA";
             const paymentUrl = getPaypalPaymentUrl(paymentBaseUrl, plan.id);
 
