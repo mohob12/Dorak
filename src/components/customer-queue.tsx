@@ -364,7 +364,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
         </section>
 
         <p className="text-center text-xs text-slate-400">
-          معرف المتجر: {shop?.id || shopId}
+          By Daorak :
         </p>
       </div>
     </main>
