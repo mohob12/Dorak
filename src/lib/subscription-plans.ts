@@ -40,7 +40,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "premium",
     name: "الباقة الذهبية",
-    price: "$14 / شهر",
+    price: "$19 / شهر",
     badge: "Premium",
     description:
       "باقة متقدمة للمتاجر التي تريد أدوات أوسع وتحكماً أكبر وقراءة أوضح لأداء الطوابير.",
