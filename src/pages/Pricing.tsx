@@ -115,13 +115,12 @@ const Pricing = () => {
                     <div className="absolute -bottom-12 -left-10 h-44 w-44 rounded-full bg-yellow-200/45 blur-2xl" />
                     <div className="absolute left-6 top-6 flex flex-col items-center rounded-[1.4rem] bg-slate-950 px-4 py-3 text-xs font-black text-white shadow-lg">
                       <span>أفضل باقة</span>
-                      <Crown className="mt-2 h-4 w-4 text-amber-300" />
                     </div>
                   </>
                 ) : null}
 
                 <div className="relative">
-                  <div className="mb-4 flex items-center justify-between gap-3 pt-16 sm:pt-12">
+                  <div className="mb-4 flex items-start justify-between gap-3 pt-16 sm:pt-12">
                     <div
                       className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
                         isPremium
@@ -133,8 +132,13 @@ const Pricing = () => {
                     </div>
 
                     {isPremium ? (
-                      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
-                        <Crown className="h-7 w-7" />
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white shadow-lg">
+                          أفضل باقة
+                        </div>
+                        <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
+                          <Crown className="h-8 w-8" />
+                        </div>
                       </div>
                     ) : null}
                   </div>
