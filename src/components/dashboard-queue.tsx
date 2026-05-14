@@ -339,7 +339,7 @@ export function DashboardQueue() {
           <header className="rounded-[2rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15">
             <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-teal-50/80">Dorak | دورك</p>
+                <p className="text-sm text-teal-50/80">Daorak | دورك</p>
                 <h1 className="mt-1 text-3xl font-black">
                   لوحة التحكم الخاصة بك
                 </h1>

@@ -33,7 +33,7 @@ const Pricing = () => {
     >
       <div className="mx-auto max-w-6xl">
         <nav className="mb-8 flex items-center justify-between rounded-full border border-teal-100 bg-white/90 px-4 py-3 shadow-sm shadow-teal-900/5">
-          <div className="text-xl font-black text-teal-800">Dorak | دورك</div>
+          <div className="text-xl font-black text-teal-800">Daorak | دورك</div>
           <div className="flex items-center gap-2">
             <Link
               to="/dashboard"
