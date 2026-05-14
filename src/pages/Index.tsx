@@ -202,9 +202,9 @@ const Index = () => {
                       </div>
                     ) : (
                       <Link
-                        to={isMonthly ? "/pricing" : `/auth?plan=${plan.id}`}
+                        to={isMonthly || isPremium ? "/pricing" : `/auth?plan=${plan.id}`}
                         className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-4 font-black transition ${
-                          isMonthly
+                          isMonthly || isPremium
                             ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
                             : "bg-teal-700 text-white hover:bg-teal-800"
                         }`}
