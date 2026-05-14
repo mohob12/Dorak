@@ -1,4 +1,12 @@
-import { CheckCircle2, CreditCard, MessageCircle, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  CheckCircle2,
+  CreditCard,
+  Crown,
+  MessageCircle,
+  ShieldCheck,
+  Sparkles,
+  Star,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
 
@@ -95,80 +103,146 @@ const Pricing = () => {
             return (
               <section
                 key={plan.id}
-                className={`rounded-[2.4rem] border bg-white p-6 shadow-sm shadow-teal-900/5 sm:p-8 ${
+                className={`relative overflow-hidden rounded-[2.6rem] border bg-white p-6 shadow-sm shadow-teal-900/5 sm:p-8 ${
                   isPremium
-                    ? "border-amber-300 bg-[#fff8e8]"
+                    ? "border-amber-300 bg-[#fff9ec] shadow-[0_24px_80px_rgba(245,158,11,0.18)] ring-1 ring-amber-200"
                     : "border-amber-200"
                 }`}
               >
-                <div
-                  className={`mb-4 inline-flex rounded-full px-3 py-1 text-xs font-black ${
-                    isPremium
-                      ? "bg-amber-200 text-amber-950"
-                      : "bg-amber-100 text-amber-800"
-                  }`}
-                >
-                  {plan.badge}
-                </div>
+                {isPremium ? (
+                  <>
+                    <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-200/50 blur-2xl" />
+                    <div className="absolute -bottom-12 -left-10 h-44 w-44 rounded-full bg-yellow-200/45 blur-2xl" />
+                    <div className="absolute left-6 top-6 inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-xs font-black text-white shadow-lg">
+                      <Crown className="h-4 w-4 text-amber-300" />
+                      أفضل باقة
+                    </div>
+                  </>
+                ) : null}
 
-                <h2 className="text-3xl font-black">{plan.name}</h2>
-
-                <p
-                  className={`mt-3 text-5xl font-black ${
-                    isPremium ? "text-amber-700" : "text-teal-800"
-                  }`}
-                >
-                  {plan.price}
-                </p>
-
-                <p className="mt-4 text-sm leading-7 text-slate-600">
-                  {plan.description}
-                </p>
-
-                <ul className="mt-6 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li
-                      key={feature}
-                      className="flex items-center gap-2 text-sm font-bold text-slate-700"
+                <div className="relative">
+                  <div className="mb-4 flex items-center justify-between gap-3 pt-10 sm:pt-0">
+                    <div
+                      className={`inline-flex rounded-full px-3 py-1 text-xs font-black ${
+                        isPremium
+                          ? "bg-amber-200 text-amber-950"
+                          : "bg-amber-100 text-amber-800"
+                      }`}
                     >
-                      <CheckCircle2
-                        className={`h-4 w-4 ${
-                          isPremium ? "text-amber-700" : "text-teal-700"
+                      {plan.badge}
+                    </div>
+
+                    {isPremium ? (
+                      <div className="flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-white text-amber-700 shadow-lg ring-1 ring-amber-200">
+                        <Crown className="h-7 w-7" />
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <h2
+                    className={`text-3xl font-black ${
+                      isPremium ? "text-slate-950" : ""
+                    }`}
+                  >
+                    {plan.name}
+                  </h2>
+
+                  <p
+                    className={`mt-3 text-5xl font-black ${
+                      isPremium ? "text-amber-700" : "text-teal-800"
+                    }`}
+                  >
+                    {plan.price}
+                  </p>
+
+                  <p
+                    className={`mt-4 text-sm leading-7 ${
+                      isPremium ? "text-slate-700" : "text-slate-600"
+                    }`}
+                  >
+                    {plan.description}
+                  </p>
+
+                  {isPremium ? (
+                    <div className="mt-6 rounded-[1.8rem] border border-amber-200 bg-white/80 p-4 shadow-sm">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                          <Star className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <p className="font-black text-slate-950">
+                            مخصصة للأعمال التي تريد تجربة أقوى
+                          </p>
+                          <p className="mt-1 text-sm leading-7 text-slate-600">
+                            تصميم أقوى، تحكم أكبر، وخصائص أوسع لإدارة الطوابير
+                            بشكل أكثر احترافية.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <ul className="mt-6 space-y-3">
+                    {plan.features.map((feature) => (
+                      <li
+                        key={feature}
+                        className={`flex items-center gap-2 text-sm font-bold ${
+                          isPremium ? "text-slate-800" : "text-slate-700"
                         }`}
-                      />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
+                      >
+                        <CheckCircle2
+                          className={`h-4 w-4 ${
+                            isPremium ? "text-amber-700" : "text-teal-700"
+                          }`}
+                        />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
 
-                <div className="mt-8 rounded-[1.7rem] bg-slate-50 p-5">
-                  <p className="text-sm font-black text-slate-800">
-                    الدفع لـ {plan.name}
-                  </p>
-                  <p className="mt-2 text-sm leading-7 text-slate-600">
-                    اضغط على الزر التالي لإتمام الدفع، وسيتم إعادتك تلقائياً
-                    إلى صفحة إنشاء الحساب الخاصة بهذه الباقة.
-                  </p>
-
-                  <a
-                    href={paymentUrl}
-                    target="_self"
-                    rel="noreferrer"
-                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-4 font-black text-slate-950 transition hover:bg-amber-400"
+                  <div
+                    className={`mt-8 rounded-[1.8rem] p-5 ${
+                      isPremium
+                        ? "border border-amber-200 bg-white/85 shadow-sm"
+                        : "bg-slate-50"
+                    }`}
                   >
-                    <CreditCard className="h-5 w-5" />
-                    إتمام الدفع
-                  </a>
+                    <p className="text-sm font-black text-slate-800">
+                      الدفع لـ {plan.name}
+                    </p>
+                    <p className="mt-2 text-sm leading-7 text-slate-600">
+                      اضغط على الزر التالي لإتمام الدفع، وسيتم إعادتك تلقائياً
+                      إلى صفحة إنشاء الحساب الخاصة بهذه الباقة.
+                    </p>
 
-                  <a
-                    href={WHATSAPP_URL}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#1e8f5a] bg-[#25D366] px-5 py-4 text-sm font-black text-white shadow-lg shadow-[#25D366]/25 transition hover:bg-[#1fb659] hover:shadow-[#1fb659]/30"
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                    او تواصل معنا لتسجيل الإشتراك
-                  </a>
+                    <a
+                      href={paymentUrl}
+                      target="_self"
+                      rel="noreferrer"
+                      className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 font-black transition ${
+                        isPremium
+                          ? "bg-slate-950 text-white shadow-lg shadow-slate-900/20 hover:bg-slate-800"
+                          : "bg-amber-500 text-slate-950 hover:bg-amber-400"
+                      }`}
+                    >
+                      {isPremium ? <Crown className="h-5 w-5 text-amber-300" /> : <CreditCard className="h-5 w-5" />}
+                      إتمام الدفع
+                    </a>
+
+                    <a
+                      href={WHATSAPP_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl px-5 py-4 text-sm font-black text-white shadow-lg transition ${
+                        isPremium
+                          ? "border border-[#1b7a4d] bg-[#1ea95f] shadow-[#1ea95f]/25 hover:bg-[#189953] hover:shadow-[#189953]/30"
+                          : "border-2 border-[#1e8f5a] bg-[#25D366] shadow-[#25D366]/25 hover:bg-[#1fb659] hover:shadow-[#1fb659]/30"
+                      }`}
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                      او تواصل معنا لتسجيل الإشتراك
+                    </a>
+                  </div>
                 </div>
               </section>
             );
