@@ -69,11 +69,12 @@ export function BusinessAuth() {
 
     if (paidApproved) {
       window.localStorage.setItem(PAID_SIGNUP_APPROVED_KEY, "true");
-      setFormMessage("تم تأكيد الدفع. يمكنك الآن إنشاء حساب الباقة المدفوعة.");
+      setFormMessage(null);
     }
 
     if (isSubscriptionPlan(planFromUrl)) {
       setSelectedPlan(planFromUrl);
+      setMode("sign_up");
       window.localStorage.setItem(PLAN_STORAGE_KEY, planFromUrl);
       return;
     }
@@ -345,13 +346,6 @@ export function BusinessAuth() {
               <p className="mb-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
                 {formMessage}
               </p>
-            ) : null}
-
-            {requiresPayment && mode === "sign_up" && !hasPaidSignupApproval ? (
-              <div className="mb-4 rounded-2xl bg-amber-50 px-4 py-4 text-sm font-bold leading-7 text-amber-900">
-                لإنشاء حساب هذه الباقة يجب إتمام الدفع أولاً، ثم ستعود هنا
-                تلقائياً لإكمال إنشاء الحساب.
-              </div>
             ) : null}
 
             <p className="mb-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-bold leading-7 text-slate-700">

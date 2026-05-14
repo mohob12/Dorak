@@ -2,12 +2,14 @@ import { CheckCircle2, CreditCard, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SUBSCRIPTION_PLANS } from "@/lib/subscription-plans";
 
-const PAYPAL_MONTHLY_PAYMENT_URL =
-  "https://www.paypal.com/ncp/payment/45DEYVZCEW2AA";
-const PAYPAL_PREMIUM_PAYMENT_URL =
-  "https://www.paypal.com/ncp/payment/FEXVQSYBCUUXS";
+const getPaypalPaymentUrl = (baseUrl: string, planId: string) => {
+  const returnUrl = encodeURIComponent(
+    `${window.location.origin}/auth?plan=${planId}&paid=success`
+  );
+  const cancelUrl = encodeURIComponent(`${window.location.origin}/pricing`);
 
-const getSignupLink = (planId: string) => `/auth?plan=${planId}&paid=success`;
+  return `${baseUrl}?return=${returnUrl}&cancel_return=${cancelUrl}`;
+};
 
 const Pricing = () => {
   const paidPlans = SUBSCRIPTION_PLANS.filter(
@@ -48,8 +50,8 @@ const Pricing = () => {
           </h1>
 
           <p className="mt-5 max-w-3xl text-base leading-8 text-teal-50/85">
-            الباقات المدفوعة في Dorak تتطلب إتمام الدفع أولاً قبل السماح بإنشاء
-            حساب جديد. بعد الدفع يمكنك العودة مباشرة إلى صفحة التسجيل للباقة نفسها.
+            بعد إتمام الدفع سيتم تحويلك تلقائياً إلى صفحة تسجيل صاحب العمل
+            للباقة التي اخترتها.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
@@ -63,9 +65,9 @@ const Pricing = () => {
 
             <div className="rounded-[1.5rem] bg-white/12 p-4 ring-1 ring-white/15">
               <ShieldCheck className="mb-3 h-6 w-6 text-amber-300" />
-              <p className="font-black">تفعيل منظم</p>
+              <p className="font-black">رجوع تلقائي</p>
               <p className="mt-1 text-sm text-teal-50/80">
-                كل باقة مدفوعة لها مسار واضح
+                ستعود مباشرة لنفس الباقة بعد الدفع
               </p>
             </div>
 
@@ -82,11 +84,11 @@ const Pricing = () => {
         <section className="mt-6 grid gap-6 lg:grid-cols-2">
           {paidPlans.map((plan) => {
             const isPremium = plan.id === "premium";
-            const paymentUrl =
+            const paymentBaseUrl =
               plan.id === "premium"
-                ? PAYPAL_PREMIUM_PAYMENT_URL
-                : PAYPAL_MONTHLY_PAYMENT_URL;
-            const returnUrl = getSignupLink(plan.id);
+                ? "https://www.paypal.com/ncp/payment/FEXVQSYBCUUXS"
+                : "https://www.paypal.com/ncp/payment/45DEYVZCEW2AA";
+            const paymentUrl = getPaypalPaymentUrl(paymentBaseUrl, plan.id);
 
             return (
               <section
@@ -142,30 +144,19 @@ const Pricing = () => {
                     الدفع لـ {plan.name}
                   </p>
                   <p className="mt-2 text-sm leading-7 text-slate-600">
-                    اضغط على الزر التالي لإتمام الدفع أولاً، ثم ستعود مباشرة إلى
-                    صفحة التسجيل الخاصة بهذه الباقة.
+                    اضغط على الزر التالي لإتمام الدفع، وسيتم إعادتك تلقائياً
+                    إلى صفحة إنشاء الحساب الخاصة بهذه الباقة.
                   </p>
 
                   <a
                     href={paymentUrl}
-                    target="_blank"
+                    target="_self"
                     rel="noreferrer"
-                    className={`mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 font-black transition ${
-                      isPremium
-                        ? "bg-amber-500 text-slate-950 hover:bg-amber-400"
-                        : "bg-amber-500 text-slate-950 hover:bg-amber-400"
-                    }`}
+                    className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-4 font-black text-slate-950 transition hover:bg-amber-400"
                   >
                     <CreditCard className="h-5 w-5" />
                     إتمام الدفع
                   </a>
-
-                  <Link
-                    to={returnUrl}
-                    className="mt-3 inline-flex w-full items-center justify-center gap-3 rounded-2xl border-2 border-[#1f2a7a] bg-[#24348f] px-5 py-4 text-sm font-black text-white shadow-lg shadow-[#24348f]/25 transition hover:bg-[#1d2d7d] hover:shadow-[#1d2d7d]/30"
-                  >
-                    العودة إلى التسجيل بعد الدفع
-                  </Link>
 
                   <Link
                     to="/postal-payment"
