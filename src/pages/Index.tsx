@@ -107,7 +107,7 @@ const Index = () => {
             <div>
               <p className="text-sm font-black text-teal-700">باقات الاشتراك</p>
               <h2 className="mt-1 text-3xl font-black">
-                اختر الخطة الانسب لعملك
+                اختر خطتك، لخدمة أسرع و تنظيم أذكى
               </h2>
               <p className="mt-2 text-sm font-bold text-slate-500">
                 اختر خطتك لخدمة أسرع و تنظيم أذكى
