@@ -109,9 +109,6 @@ const Index = () => {
               <h2 className="mt-1 text-3xl font-black">
                 اختر خطتك، لخدمة أسرع و تنظيم أذكى
               </h2>
-              <p className="mt-2 text-sm font-bold text-slate-500">
-                اختر خطتك لخدمة أسرع و تنظيم أذكى
-              </p>
             </div>
           </div>
 
