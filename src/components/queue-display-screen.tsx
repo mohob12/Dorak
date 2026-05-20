@@ -176,7 +176,7 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
               <div className="inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-black">
                 Dorak | دورك
               </div>
-              <h1 className="mt-4 text-4xl font-black sm:text-6xl">
+              <h1 className="mt-4 text-2xl font-black sm:text-4xl">
                 تابع الأدوار بشكل مباشر
               </h1>
             </div>
