@@ -27,6 +27,40 @@ type CustomerQueueProps = {
   shopId: string;
 };
 
+const playNearTurnSound = () => {
+  const AudioContextClass =
+    window.AudioContext ||
+    (window as typeof window & {
+      webkitAudioContext?: typeof AudioContext;
+    }).webkitAudioContext;
+
+  if (!AudioContextClass) {
+    return;
+  }
+
+  const audioContext = new AudioContextClass();
+  void audioContext.resume();
+
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+
+  oscillator.type = "sine";
+  oscillator.frequency.value = 880;
+
+  gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.2);
+
+  window.setTimeout(() => {
+    void audioContext.close();
+  }, 400);
+};
+
 export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [shop, setShop] = useState<Shop | null>(null);
   const [waitingTickets, setWaitingTickets] = useState<Ticket[]>([]);
@@ -163,6 +197,9 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       setShowNearTurnAlert(true);
 
       if (!nearTurnToastShown.current) {
+        navigator.vibrate?.([120, 80, 120]);
+        playNearTurnSound();
+
         toast("اقترب دورك", {
           description: "بقي تقريباً 5 دقائق أو أقل على دورك. يرجى الاستعداد.",
           duration: 7000,
@@ -179,6 +216,9 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       ticketPosition <= 1 &&
       previousPosition.current > 1
     ) {
+      navigator.vibrate?.([120, 80, 120]);
+      playNearTurnSound();
+
       toast("اقترب دورك", {
         description: "بقي أمامك شخص واحد أو أقل، يرجى الاستعداد.",
         duration: 7000,
