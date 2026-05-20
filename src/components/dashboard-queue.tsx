@@ -499,7 +499,7 @@ export function DashboardQueue() {
             <button
               type="button"
               onClick={clearQueue}
-              disabled={isClearingQueue || waitingTickets.length === 0}
+              disabled={isClearingQueue}
               className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Trash2 className="h-4 w-4" />
