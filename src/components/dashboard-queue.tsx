@@ -645,7 +645,7 @@ export function DashboardQueue() {
                               <Trash2 className="h-4 w-4" />
                               {deletingTicketId === ticketItem.id
                                 ? "جاري الحذف..."
-                                : "حذف الاسم"}
+                                : "حذف"}
                             </button>
                           ) : null}
                         </div>
