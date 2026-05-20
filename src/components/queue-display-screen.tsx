@@ -182,10 +182,10 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-[1.7rem] border border-violet-200/80 bg-violet-50 p-5 text-violet-900 shadow-lg shadow-violet-900/10">
-                <Store className="mb-3 h-7 w-7 text-violet-700" />
-                <p className="text-sm font-bold text-violet-700">المعرف</p>
-                <p className="mt-2 text-2xl font-black text-violet-950">
+              <div className="rounded-[1.7rem] border border-slate-200 bg-slate-50 p-5 text-slate-900 shadow-lg shadow-slate-900/5">
+                <Store className="mb-3 h-7 w-7 text-slate-500" />
+                <p className="text-sm font-bold text-slate-500">المعرف</p>
+                <p className="mt-2 text-2xl font-black text-slate-800">
                   {shop?.id || shopId}
                 </p>
               </div>
