@@ -225,8 +225,7 @@ export async function clearWaitingTickets(shopId: string) {
   const { error } = await supabase
     .from("tickets")
     .delete()
-    .eq("shop_id", shopId)
-    .eq("status", "waiting");
+    .eq("shop_id", shopId);
 
   if (error) {
     throw new Error(error.message);
