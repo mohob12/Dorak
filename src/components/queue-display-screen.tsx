@@ -177,14 +177,11 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
                 Dorak | دورك
               </div>
               <h1 className="mt-4 text-4xl font-black sm:text-6xl">
-                شاشة عرض الأدوار
+                تابع الأدوار بشكل مباشر
               </h1>
-              <p className="mt-3 text-base leading-8 text-teal-50/85 sm:text-lg">
-                تابع الدور الحالي والأدوار القادمة بشكل مباشر.
-              </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-3">
               <div className="rounded-[1.7rem] bg-white/12 p-5 ring-1 ring-white/15">
                 <UsersRound className="mb-3 h-7 w-7 text-amber-300" />
                 <p className="text-sm text-teal-50/80">في الانتظار</p>
@@ -195,6 +192,12 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
                 <Store className="mb-3 h-7 w-7 text-amber-300" />
                 <p className="text-sm text-teal-50/80">المعرف</p>
                 <p className="mt-2 text-2xl font-black">{shop?.id || shopId}</p>
+              </div>
+
+              <div className="rounded-[1.7rem] bg-white/12 p-5 ring-1 ring-white/15">
+                <Ticket className="mb-3 h-7 w-7 text-amber-300" />
+                <p className="text-sm text-teal-50/80">العدد الكلي</p>
+                <p className="mt-2 text-4xl font-black">{tickets.length}</p>
               </div>
             </div>
           </div>
