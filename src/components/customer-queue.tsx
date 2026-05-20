@@ -269,16 +269,34 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
         ) : null}
 
         {showNearTurnAlert && currentTicket && !isServed ? (
-          <section className="rounded-[1.8rem] border border-amber-200 bg-amber-50 p-4 shadow-sm shadow-amber-500/10">
-            <div className="flex items-start gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-sm">
-                <Bell className="h-6 w-6" />
+          <section className="relative overflow-hidden rounded-[2rem] border border-amber-300 bg-[#fff7df] p-5 shadow-[0_18px_50px_rgba(245,158,11,0.18)]">
+            <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-amber-200/80 blur-2xl" />
+            <div className="absolute -bottom-12 -left-8 h-32 w-32 rounded-full bg-teal-200/50 blur-3xl" />
+
+            <div className="relative flex items-start gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/25 ring-4 ring-white/60">
+                <Bell className="h-7 w-7 animate-pulse" />
               </div>
+
               <div className="flex-1">
-                <p className="text-lg font-black text-amber-950">اقترب دورك</p>
-                <p className="mt-1 text-sm leading-7 text-amber-900">
+                <div className="inline-flex rounded-full bg-teal-700 px-3 py-1 text-xs font-black text-white shadow-sm">
+                  اقترب دورك
+                </div>
+                <h3 className="mt-3 text-2xl font-black leading-tight text-slate-950">
+                  اقترب دورك
+                </h3>
+                <p className="mt-2 text-sm leading-7 text-slate-700">
                   بقي تقريباً {estimatedWait} على دورك. يرجى الاستعداد والاقتراب من مكان الخدمة.
                 </p>
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-700 ring-1 ring-amber-100">
+                    انتظار مباشر
+                  </span>
+                  <span className="rounded-full bg-teal-50 px-3 py-2 text-xs font-bold text-teal-800 ring-1 ring-teal-100">
+                    تحديث فوري
+                  </span>
+                </div>
               </div>
             </div>
           </section>
