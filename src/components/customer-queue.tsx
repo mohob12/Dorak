@@ -35,8 +35,10 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
   const [isBooking, setIsBooking] = useState(false);
   const [showTurnAlert, setShowTurnAlert] = useState(false);
   const [hasMissedTurn, setHasMissedTurn] = useState(false);
+  const [showNearTurnAlert, setShowNearTurnAlert] = useState(false);
   const previousTicketStatus = useRef<TicketStatus | null>(null);
   const previousPosition = useRef<number | null>(null);
+  const nearTurnToastShown = useRef(false);
 
   const storageKey = `dorak-ticket-${shopId}`;
 
@@ -143,10 +145,33 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     return index >= 0 ? index : 0;
   }, [currentTicket, waitingTickets]);
 
+  const estimatedWaitMinutes = useMemo(() => {
+    return ticketPosition * (shop?.avg_service_minutes || 4);
+  }, [shop?.avg_service_minutes, ticketPosition]);
+
+  const shouldShowNearTurnAlert = estimatedWaitMinutes <= 5 && estimatedWaitMinutes > 0;
+
   useEffect(() => {
     if (!currentTicket || currentTicket.status !== "waiting") {
       previousPosition.current = null;
+      nearTurnToastShown.current = false;
+      setShowNearTurnAlert(false);
       return;
+    }
+
+    if (shouldShowNearTurnAlert) {
+      setShowNearTurnAlert(true);
+
+      if (!nearTurnToastShown.current) {
+        toast("اقترب دورك", {
+          description: "بقي تقريباً 5 دقائق أو أقل على دورك. يرجى الاستعداد.",
+          duration: 7000,
+        });
+        nearTurnToastShown.current = true;
+      }
+    } else {
+      setShowNearTurnAlert(false);
+      nearTurnToastShown.current = false;
     }
 
     if (
@@ -161,7 +186,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     }
 
     previousPosition.current = ticketPosition;
-  }, [currentTicket, ticketPosition]);
+  }, [currentTicket, shouldShowNearTurnAlert, ticketPosition]);
 
   const estimatedWait = formatWaitTime(
     ticketPosition * (shop?.avg_service_minutes || 4)
@@ -190,6 +215,8 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       setCustomerName("");
       setShowTurnAlert(false);
       setHasMissedTurn(false);
+      setShowNearTurnAlert(false);
+      nearTurnToastShown.current = false;
       toast.success(`تم حجز دور ${trimmedName} بنجاح: رقم ${ticket.ticket_number ?? "—"}`);
       await loadQueue();
     } catch (error) {
@@ -204,8 +231,10 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
     setCurrentTicket(null);
     setShowTurnAlert(false);
     setHasMissedTurn(false);
+    setShowNearTurnAlert(false);
     previousTicketStatus.current = null;
     previousPosition.current = null;
+    nearTurnToastShown.current = false;
     toast.success("يمكنك الآن حجز دور جديد");
   };
 
@@ -237,6 +266,22 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
 
         {showTurnAlert && isServed && currentTicket?.ticket_number !== null ? (
           <TurnAlert ticketNumber={currentTicket.ticket_number} />
+        ) : null}
+
+        {showNearTurnAlert && currentTicket && !isServed ? (
+          <section className="rounded-[1.8rem] border border-amber-200 bg-amber-50 p-4 shadow-sm shadow-amber-500/10">
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400 text-slate-950 shadow-sm">
+                <Bell className="h-6 w-6" />
+              </div>
+              <div className="flex-1">
+                <p className="text-lg font-black text-amber-950">اقترب دورك</p>
+                <p className="mt-1 text-sm leading-7 text-amber-900">
+                  بقي تقريباً {estimatedWait} على دورك. يرجى الاستعداد والاقتراب من مكان الخدمة.
+                </p>
+              </div>
+            </div>
+          </section>
         ) : null}
 
         {currentTicket && !isServed ? (
