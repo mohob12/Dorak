@@ -213,6 +213,26 @@ export async function cancelTicket(ticketId: string) {
   return data as Ticket;
 }
 
+export async function deleteTicket(ticketId: string) {
+  const { error } = await supabase.from("tickets").delete().eq("id", ticketId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function clearWaitingTickets(shopId: string) {
+  const { error } = await supabase
+    .from("tickets")
+    .delete()
+    .eq("shop_id", shopId)
+    .eq("status", "waiting");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
 export async function serveNextTicket(shopId: string) {
   const waitingTickets = await getWaitingTickets(shopId);
   const nextTicket = waitingTickets[0];

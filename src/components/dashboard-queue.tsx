@@ -11,6 +11,7 @@ import {
   Sparkles,
   Store,
   Ticket,
+  Trash2,
   UsersRound,
   XCircle,
 } from "lucide-react";
@@ -32,6 +33,8 @@ import {
   ensureShop,
   getTickets,
   serveNextTicket,
+  deleteTicket,
+  clearWaitingTickets,
   type Shop,
   type Ticket as QueueTicket,
 } from "@/lib/queue";
@@ -56,6 +59,8 @@ export function DashboardQueue() {
   const [isPreparingDashboard, setIsPreparingDashboard] = useState(true);
   const [manualCustomerName, setManualCustomerName] = useState("");
   const [isAddingCustomer, setIsAddingCustomer] = useState(false);
+  const [deletingTicketId, setDeletingTicketId] = useState<string | null>(null);
+  const [isClearingQueue, setIsClearingQueue] = useState(false);
 
   const activePlan = useMemo(() => {
     return SUBSCRIPTION_PLANS.find(
@@ -169,6 +174,12 @@ export function DashboardQueue() {
     };
   }, [activeShopId, trialExpired, user]);
 
+  const refreshQueue = async () => {
+    if (user) {
+      await loadQueue(activeShopId, user.id);
+    }
+  };
+
   const applyShopId = async () => {
     if (!user || trialExpired) {
       return;
@@ -229,6 +240,22 @@ export function DashboardQueue() {
     }
 
     setIsServing(false);
+  };
+
+  const deleteWaitingTicket = async (ticketId: string, ticketNumber: number | null) => {
+    setDeletingTicketId(ticketId);
+    await deleteTicket(ticketId);
+    toast.success(`تم حذف التذكرة ${ticketNumber ?? "—"}`);
+    await refreshQueue();
+    setDeletingTicketId(null);
+  };
+
+  const clearQueue = async () => {
+    setIsClearingQueue(true);
+    await clearWaitingTickets(activeShopId);
+    toast.success("تم حذف جميع الأسماء من قائمة الانتظار");
+    await refreshQueue();
+    setIsClearingQueue(false);
   };
 
   const logout = async () => {
@@ -462,6 +489,24 @@ export function DashboardQueue() {
             </div>
           </section>
 
+          <section className="flex items-center justify-between rounded-[2rem] border border-teal-100 bg-white p-4 shadow-sm shadow-teal-900/5">
+            <div>
+              <h2 className="text-lg font-black">إدارة قائمة الانتظار</h2>
+              <p className="mt-1 text-sm text-slate-500">
+                يمكنك حذف اسم واحد أو تفريغ القائمة بالكامل.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={clearQueue}
+              disabled={isClearingQueue || waitingTickets.length === 0}
+              className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Trash2 className="h-4 w-4" />
+              {isClearingQueue ? "جاري الحذف..." : "حذف الكل"}
+            </button>
+          </section>
+
           <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-[1.6rem] border border-teal-100 bg-white p-5 shadow-sm">
               <UsersRound className="mb-4 h-6 w-6 text-teal-700" />
@@ -525,6 +570,7 @@ export function DashboardQueue() {
 
                   const isNextTurn =
                     ticketItem.status === "waiting" && waitingIndex === 0;
+                  const isWaiting = ticketItem.status === "waiting";
 
                   return (
                     <div
@@ -582,6 +628,25 @@ export function DashboardQueue() {
                               peopleAhead={waitingIndex >= 0 ? waitingIndex : 0}
                               avgServiceMinutes={shop?.avg_service_minutes || 4}
                             />
+                          ) : null}
+
+                          {isWaiting ? (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                deleteWaitingTicket(
+                                  ticketItem.id,
+                                  ticketItem.ticket_number
+                                )
+                              }
+                              disabled={deletingTicketId === ticketItem.id}
+                              className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-4 py-3 text-sm font-black text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                              {deletingTicketId === ticketItem.id
+                                ? "جاري الحذف..."
+                                : "حذف الاسم"}
+                            </button>
                           ) : null}
                         </div>
                       </div>
