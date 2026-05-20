@@ -1,6 +1,13 @@
 "use client";
 
-import { MonitorPlay, Store, Ticket, UsersRound, Volume2 } from "lucide-react";
+import {
+  MonitorPlay,
+  Store,
+  Ticket,
+  UsersRound,
+  Volume2,
+  BellRing,
+} from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -139,7 +146,7 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
 
       const timer = window.setTimeout(() => {
         setHighlightTurn(false);
-      }, 4500);
+      }, 5000);
 
       previousCurrentTurnId.current = currentTurn.id;
 
@@ -167,8 +174,48 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
   return (
     <main
       dir="rtl"
-      className="min-h-screen bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6 lg:px-10"
+      className="relative min-h-screen overflow-hidden bg-[#f6fbf8] px-4 py-6 text-slate-950 sm:px-6 lg:px-10"
     >
+      {highlightTurn && currentTurn ? (
+        <section className="fixed inset-0 z-50 flex animate-in fade-in items-center justify-center bg-teal-950/80 px-4 py-8 duration-300 backdrop-blur-md">
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-[3rem] border border-white/20 bg-[#fffaf0] px-6 py-10 text-center shadow-[0_30px_120px_rgba(15,23,42,0.35)] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 sm:px-10 sm:py-14">
+            <div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-amber-200/70 blur-2xl" />
+            <div className="absolute -bottom-20 -left-16 h-56 w-56 rounded-full bg-teal-200/50 blur-3xl" />
+            <div className="absolute inset-x-0 top-0 h-2 bg-amber-400" />
+
+            <div className="relative mx-auto flex h-24 w-24 items-center justify-center rounded-[2rem] bg-amber-400 text-slate-950 shadow-xl shadow-amber-500/30 ring-8 ring-amber-100 sm:h-28 sm:w-28">
+              <BellRing className="h-12 w-12 animate-pulse sm:h-14 sm:w-14" />
+            </div>
+
+            <div className="relative mt-6 inline-flex items-center gap-2 rounded-full bg-teal-700 px-5 py-2 text-sm font-black text-white shadow-lg shadow-teal-700/20">
+              <Volume2 className="h-4 w-4" />
+              إشعار دور جديد
+            </div>
+
+            <h2 className="relative mt-6 text-3xl font-black leading-tight text-slate-950 sm:text-5xl lg:text-6xl">
+              الآن الدور الحالي
+            </h2>
+
+            <div className="relative mx-auto mt-6 max-w-2xl rounded-[2.5rem] bg-white px-6 py-8 shadow-2xl ring-1 ring-amber-100 sm:px-10 sm:py-10">
+              <p className="text-base font-bold text-slate-500 sm:text-lg">
+                رقم التذكرة
+              </p>
+              <p className="mt-3 text-7xl font-black tracking-tight text-teal-800 sm:text-8xl lg:text-[9rem]">
+                {currentTurn.ticket_number ?? "—"}
+              </p>
+            </div>
+
+            <p className="relative mx-auto mt-6 max-w-3xl text-lg font-black leading-8 text-slate-800 sm:text-2xl">
+              يرجى من صاحب هذا الرقم التوجه فورًا إلى مكان الخدمة
+            </p>
+
+            <div className="relative mt-8 inline-flex rounded-full bg-amber-100 px-5 py-3 text-sm font-black text-amber-900 sm:text-base">
+              سيختفي هذا التنبيه تلقائيًا بعد 5 ثوانٍ
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <div className="mx-auto max-w-7xl">
         <header className="rounded-[2.5rem] bg-teal-700 p-6 text-white shadow-xl shadow-teal-900/15 sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
@@ -209,31 +256,8 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
           </div>
         </header>
 
-        {highlightTurn && currentTurn ? (
-          <section className="mt-6 animate-in fade-in zoom-in-95 duration-500">
-            <div className="rounded-[2rem] border-4 border-amber-300 bg-amber-400 px-6 py-5 text-center text-slate-950 shadow-2xl shadow-amber-500/30">
-              <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-amber-700">
-                <Volume2 className="h-7 w-7 animate-pulse" />
-              </div>
-              <p className="text-lg font-black">تنبيه جديد</p>
-              <p className="mt-2 text-3xl font-black sm:text-4xl">
-                الآن الدور رقم {currentTurn.ticket_number ?? "—"}
-              </p>
-              <p className="mt-2 text-sm font-bold text-slate-800">
-                يرجى توجه صاحب هذا الرقم إلى مكان الخدمة فوراً
-              </p>
-            </div>
-          </section>
-        ) : null}
-
         <section className="mt-6 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-          <div
-            className={`rounded-[2.5rem] p-6 text-center text-slate-950 shadow-xl sm:p-10 ${
-              highlightTurn
-                ? "animate-pulse bg-amber-300 shadow-amber-500/30 ring-4 ring-amber-200"
-                : "bg-amber-400 shadow-amber-500/20"
-            }`}
-          >
+          <div className="rounded-[2.5rem] bg-amber-400 p-6 text-center text-slate-950 shadow-xl shadow-amber-500/20 sm:p-10">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-[2rem] bg-white text-amber-700 shadow-lg">
               <MonitorPlay className="h-10 w-10" />
             </div>
@@ -241,11 +265,7 @@ export function QueueDisplayScreen({ shopId }: QueueDisplayScreenProps) {
             <p className="text-lg font-black">الدور الحالي</p>
             <div className="mt-5 rounded-[2rem] bg-white px-6 py-8 shadow-lg">
               <p className="text-sm font-bold text-slate-500">رقم التذكرة</p>
-              <p
-                className={`mt-3 font-black tracking-tight sm:text-9xl ${
-                  highlightTurn ? "text-8xl text-teal-800" : "text-7xl"
-                }`}
-              >
+              <p className="mt-3 text-7xl font-black tracking-tight sm:text-9xl">
                 {currentTurn?.ticket_number ?? "—"}
               </p>
             </div>
