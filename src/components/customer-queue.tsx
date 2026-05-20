@@ -263,7 +263,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
               </div>
               <h2 className="text-2xl font-black">جاهز تحجز دورك؟</h2>
               <p className="mx-auto mt-2 max-w-xs text-sm leading-7 text-slate-500">
-                أدخل اسمك فقط وسيتم إنشاء تذكرة جديدة لك في طابور هذا المتجر.
+                اكتب اسمك لحجز دورك في قائمة الإنتظار
               </p>
 
               <div className="mt-5 text-right">
