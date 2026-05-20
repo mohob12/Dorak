@@ -41,24 +41,42 @@ const playNearTurnSound = () => {
   const audioContext = new AudioContextClass();
   void audioContext.resume();
 
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
+  const notes = [880, 880];
 
-  oscillator.type = "sine";
-  oscillator.frequency.value = 880;
+  notes.forEach((frequency, index) => {
+    const delay = index * 0.3;
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
 
-  gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.08, audioContext.currentTime + 0.02);
-  gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.18);
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
 
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.0001, audioContext.currentTime + delay);
+    gain.gain.exponentialRampToValueAtTime(
+      0.08,
+      audioContext.currentTime + delay + 0.02
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      audioContext.currentTime + delay + 0.18
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+    oscillator.start(audioContext.currentTime + delay);
+    oscillator.stop(audioContext.currentTime + delay + 0.2);
+  });
 
   window.setTimeout(() => {
     void audioContext.close();
-  }, 400);
+  }, 800);
+};
+
+const playNearTurnVibration = () => {
+  navigator.vibrate?.([120, 80, 120]);
+  window.setTimeout(() => {
+    navigator.vibrate?.([120, 80, 120]);
+  }, 300);
 };
 
 export function CustomerQueue({ shopId }: CustomerQueueProps) {
@@ -197,7 +215,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       setShowNearTurnAlert(true);
 
       if (!nearTurnToastShown.current) {
-        navigator.vibrate?.([120, 80, 120]);
+        playNearTurnVibration();
         playNearTurnSound();
 
         toast("اقترب دورك", {
@@ -216,7 +234,7 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
       ticketPosition <= 1 &&
       previousPosition.current > 1
     ) {
-      navigator.vibrate?.([120, 80, 120]);
+      playNearTurnVibration();
       playNearTurnSound();
 
       toast("اقترب دورك", {
