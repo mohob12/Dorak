@@ -487,6 +487,12 @@ export function CustomerQueue({ shopId }: CustomerQueueProps) {
         <p className="text-center text-xs text-slate-400">
           By Daorak : {shop?.id || shopId}
         </p>
+
+        <div className="rounded-[1.4rem] border border-teal-100 bg-white px-4 py-4 text-center shadow-sm shadow-teal-900/5">
+          <p className="text-sm font-bold leading-7 text-teal-800">
+            ملاحظة: أبقِ النافذة مفتوحة في الخلفية ليصلك إشعار دورك.
+          </p>
+        </div>
       </div>
     </main>
   );
