@@ -7,6 +7,92 @@ type ShopQrCardProps = {
   shopId: string;
 };
 
+const CANVAS_WIDTH = 1240;
+const CANVAS_HEIGHT = 1754;
+
+type TextBlock = {
+  text: string;
+  x: number;
+  y: number;
+  font: string;
+  color?: string;
+  direction?: CanvasDirection;
+  maxWidth?: number;
+  lineHeight?: number;
+};
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+
+const wrapText = (
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number
+) => {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let currentLine = "";
+
+  words.forEach((word) => {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const width = ctx.measureText(testLine).width;
+
+    if (width > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+      return;
+    }
+
+    currentLine = testLine;
+  });
+
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+
+  return lines;
+};
+
+const drawTextBlock = (
+  ctx: CanvasRenderingContext2D,
+  block: TextBlock
+) => {
+  const {
+    text,
+    x,
+    y,
+    font,
+    color = "#0f172a",
+    direction = "ltr",
+    maxWidth,
+    lineHeight = 44,
+  } = block;
+
+  ctx.save();
+  ctx.font = font;
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  ctx.direction = direction;
+
+  const lines =
+    maxWidth && ctx.measureText(text).width > maxWidth
+      ? wrapText(ctx, text, maxWidth)
+      : text.split("\n");
+
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + index * lineHeight);
+  });
+
+  ctx.restore();
+};
+
 export function ShopQrCard({ shopId }: ShopQrCardProps) {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const shopUrl = `${origin}/shop/${shopId}`;
@@ -38,12 +124,81 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
       fetch(qrUrl),
     ]);
 
-    const blob = await response.blob();
-    const imageUrl = await new Promise<string>((resolve) => {
+    await document.fonts.ready;
+
+    const qrBlob = await response.blob();
+    const qrImageUrl = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
+      reader.readAsDataURL(qrBlob);
     });
+
+    const qrImage = await loadImage(qrImageUrl);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      throw new Error("تعذر إنشاء ملف PDF");
+    }
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    const centerX = CANVAS_WIDTH / 2;
+
+    drawTextBlock(ctx, {
+      text: "Dorak QR Code",
+      x: centerX,
+      y: 120,
+      font: "700 56px Tajawal, Arial, sans-serif",
+      color: "#0f172a",
+      direction: "ltr",
+    });
+
+    drawTextBlock(ctx, {
+      text: `المعرف: ${shopId}`,
+      x: centerX,
+      y: 210,
+      font: "700 42px Tajawal, Arial, sans-serif",
+      color: "#0f766e",
+      direction: "rtl",
+      maxWidth: 980,
+    });
+
+    drawTextBlock(ctx, {
+      text: "امسح الرمز واحجز دورك في الطابور",
+      x: centerX,
+      y: 275,
+      font: "700 36px Tajawal, Arial, sans-serif",
+      color: "#111827",
+      direction: "rtl",
+      maxWidth: 980,
+    });
+
+    drawTextBlock(ctx, {
+      text: "Scan code QR",
+      x: centerX,
+      y: 332,
+      font: "700 28px Tajawal, Arial, sans-serif",
+      color: "#475569",
+      direction: "ltr",
+    });
+
+    ctx.save();
+    ctx.fillStyle = "#f8fafc";
+    ctx.strokeStyle = "#d1fae5";
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(250, 430, 740, 740, 36);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.drawImage(qrImage, 320, 500, 600, 600);
 
     const pdf = new jsPDF({
       orientation: "portrait",
@@ -51,18 +206,7 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
       format: "a4",
     });
 
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(18);
-    pdf.text("Dorak QR Code", 105, 24, { align: "center" });
-
-    pdf.setFontSize(13);
-    pdf.text(`المعرف: ${shopId}`, 105, 34, { align: "center" });
-
-    pdf.setFontSize(11);
-    pdf.text("امسح الرمز واحجز دورك في الطابور", 105, 42, { align: "center" });
-    pdf.text("Scan code QR", 105, 48, { align: "center" });
-
-    pdf.addImage(imageUrl, "PNG", 45, 58, 120, 120);
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, 210, 297);
     pdf.save(`dorak-qr-${shopId}.pdf`);
 
     toast.success("تم تحميل QR بصيغة PDF");
