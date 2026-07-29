@@ -54,9 +54,15 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(18);
     pdf.text("Dorak QR Code", 105, 24, { align: "center" });
+
+    pdf.setFontSize(13);
+    pdf.text(`المعرف: ${shopId}`, 105, 34, { align: "center" });
+
     pdf.setFontSize(11);
-    pdf.text(shopUrl, 105, 32, { align: "center", maxWidth: 170 });
-    pdf.addImage(imageUrl, "PNG", 45, 45, 120, 120);
+    pdf.text("امسح الرمز واحجز دورك في الطابور", 105, 42, { align: "center" });
+    pdf.text("Scan code QR", 105, 48, { align: "center" });
+
+    pdf.addImage(imageUrl, "PNG", 45, 58, 120, 120);
     pdf.save(`dorak-qr-${shopId}.pdf`);
 
     toast.success("تم تحميل QR بصيغة PDF");
@@ -99,9 +105,7 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
         </div>
 
         <div className="rounded-[1.4rem] border border-amber-100 bg-amber-50 p-4">
-          <p className="text-sm font-black text-amber-900">
-            تحميل رمز QR
-          </p>
+          <p className="text-sm font-black text-amber-900">تحميل رمز QR</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             <button
               type="button"
