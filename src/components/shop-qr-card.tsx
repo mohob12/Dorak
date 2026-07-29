@@ -160,12 +160,12 @@ export function ShopQrCard({ shopId }: ShopQrCardProps) {
     });
 
     drawTextBlock(ctx, {
-      text: `المعرف: ${shopId}`,
+      text: shopId,
       x: centerX,
       y: 210,
       font: "700 42px Tajawal, Arial, sans-serif",
       color: "#0f766e",
-      direction: "rtl",
+      direction: "ltr",
       maxWidth: 980,
     });
 
