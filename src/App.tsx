@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/components/session-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import AdminControl from "./pages/AdminControl";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <SpeedInsights />
       </SessionProvider>
     </TooltipProvider>
   </QueryClientProvider>
